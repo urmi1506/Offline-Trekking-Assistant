@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no"/>
+<meta name="theme-color" content="#0D9488"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="TrekMate"/>
+<title>TrekMate – Full Fledge</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+/* ══════════════════ TOKENS ══════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#070F1A;--bg2:#0C1824;--bg3:#111F2E;--card:#0F1E2D;--card2:#152636;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --teal:#0D9488;--teal2:#14B8A6;--teal3:#5EEAD4;--teal-glow:rgba(13,148,136,.35);
+  --text:#F0F9FF;--text2:#94A3B8;--text3:#475569;
+  --red:#EF4444;--red2:#FCA5A5;--amber:#F59E0B;--green:#22C55E;--purple:#8B5CF6;
+  --safe-bot:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);
+  --nav-h:68px;--font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;font-size:15px}
+input,button,textarea,select{font-family:var(--font-b)}
+button{cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{color:var(--text);background:none;border:none;outline:none}
+
+/* ══════════════════ SCREENS ══════════════════ */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;background:var(--bg)}
+.screen.active{display:flex}
+.tab-content{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 4px);scroll-behavior:smooth}
+.tab-content::-webkit-scrollbar{display:none}
+
+/* ══════════════════ SPLASH ══════════════════ */
+#splash{z-index:200;background:var(--bg);align-items:center;justify-content:center}
+.sp-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.sp-bg svg{width:100%;height:100%}
+.sp-content{position:relative;z-index:1;text-align:center;padding:2rem;display:flex;flex-direction:column;align-items:center}
+.sp-logo-ring{width:90px;height:90px;border-radius:26px;background:linear-gradient(135deg,var(--teal),var(--teal3));display:flex;align-items:center;justify-content:center;font-size:2.5rem;box-shadow:0 0 0 1px rgba(94,234,212,.2),0 0 48px var(--teal-glow);margin-bottom:1.5rem;animation:logoIn .7s cubic-bezier(.34,1.56,.64,1) both}
+.sp-title{font-family:var(--font-h);font-size:3rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,var(--teal2) 0%,var(--teal3) 60%,#fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeUp .6s .25s both}
+.sp-tagline{font-size:.85rem;color:var(--text2);letter-spacing:.14em;text-transform:uppercase;margin-top:.5rem;animation:fadeUp .6s .4s both}
+.sp-bar-track{width:180px;height:3px;background:var(--bg3);border-radius:99px;margin:3rem auto 0;overflow:hidden;animation:fadeUp .5s .5s both}
+.sp-bar{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal3));width:0%;border-radius:99px}
+.sp-version{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-size:.7rem;color:var(--text3);letter-spacing:.08em}
+
+/* ══════════════════ ONBOARDING ══════════════════ */
+#onboarding{z-index:190;background:var(--bg);align-items:center;justify-content:center;padding:1.5rem}
+.ob-wrap{width:100%;max-width:380px;animation:fadeUp .5s ease}
+.ob-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.25);font-size:.72rem;color:var(--teal3);font-family:var(--font-h);font-weight:600;letter-spacing:.06em;margin-bottom:1.75rem}
+.ob-title{font-family:var(--font-h);font-size:1.9rem;font-weight:800;line-height:1.1;margin-bottom:.6rem}
+.ob-title span{color:var(--teal2)}
+.ob-sub{font-size:.88rem;color:var(--text2);line-height:1.65;margin-bottom:2rem}
+.ob-card{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:1.5rem;margin-bottom:1rem}
+.ob-field-label{font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.ob-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:.8rem 1rem;font-size:.95rem;color:var(--text);transition:border-color .2s;margin-bottom:1.1rem}
+.ob-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.12);outline:none}
+.ob-input:last-of-type{margin-bottom:0}
+.btn-primary{width:100%;padding:.95rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:14px;font-family:var(--font-h);font-size:1rem;font-weight:700;color:#fff;letter-spacing:.02em;transition:opacity .2s,transform .1s;box-shadow:0 4px 24px var(--teal-glow)}
+.btn-primary:active{transform:scale(.97);opacity:.9}
+
+/* ══════════════════ BOTTOM NAV ══════════════════ */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;height:calc(var(--nav-h) + var(--safe-bot));padding-bottom:var(--safe-bot);background:rgba(7,15,26,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;color:var(--text3);transition:color .2s;padding:.3rem 0;position:relative}
+.nav-tab.active{color:var(--teal2)}
+.nav-tab svg{width:22px;height:22px;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.nav-tab.active svg{transform:translateY(-2px) scale(1.1)}
+.nav-tab span{font-size:.58rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+.nav-tab.sos-tab{color:var(--red)}
+.nav-tab.sos-tab.active{color:var(--red)}
+.nav-active-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--teal2);border-radius:99px;opacity:0;transition:opacity .2s}
+.nav-tab.active .nav-active-bar{opacity:1}
+.nav-tab.sos-tab.active .nav-active-bar{background:var(--red)}
+
+/* ══════════════════ HOME ══════════════════ */
+.home-topbar{display:flex;align-items:center;gap:.875rem;padding:calc(var(--safe-top) + .9rem) 1.25rem .75rem;background:rgba(7,15,26,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border)}
+.top-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal3));display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:1rem;flex-shrink:0;box-shadow:0 0 0 2px rgba(94,234,212,.3)}
+.top-info{flex:1}
+.top-greeting{font-size:.68rem;color:var(--text2);letter-spacing:.05em}
+.top-name{font-family:var(--font-h);font-size:1rem;font-weight:700;line-height:1.2}
+.top-actions{display:flex;gap:.5rem}
+.top-icon-btn{width:36px;height:36px;background:var(--bg3);border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);color:var(--text2);transition:all .2s}
+.top-icon-btn:active{background:var(--card2)}
+
+/* Connectivity badge */
+.conn-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:.65rem;font-weight:600;font-family:var(--font-h);letter-spacing:.06em;border:1px solid;margin-right:.25rem}
+.conn-badge.online{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#4ADE80}
+.conn-badge.offline{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--amber)}
+.conn-dot{width:5px;height:5px;border-radius:50%}
+.conn-badge.online .conn-dot{background:var(--green);box-shadow:0 0 5px var(--green);animation:pulse 2s infinite}
+.conn-badge.offline .conn-dot{background:var(--amber)}
+
+.stories-section{padding:.875rem 0;border-bottom:1px solid var(--border)}
+.stories-scroll{display:flex;gap:.75rem;overflow-x:auto;padding:0 1.25rem}
+.stories-scroll::-webkit-scrollbar{display:none}
+.story-item{display:flex;flex-direction:column;align-items:center;gap:.35rem;flex-shrink:0;cursor:pointer}
+.story-ring{width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,var(--teal),var(--teal3),var(--purple));transition:transform .2s}
+.story-ring:active{transform:scale(.92)}
+.story-inner{width:100%;height:100%;border-radius:50%;background:var(--bg3);border:2.5px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.4rem;overflow:hidden}
+.story-name{font-size:.62rem;color:var(--text2);text-align:center;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.story-add{width:62px;height:62px;border-radius:50%;border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:1.3rem;flex-shrink:0;cursor:pointer}
+
+.active-trek-card{margin:1rem 1.25rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#062620 0%,#0A3530 50%,#0D3D37 100%);border:1px solid rgba(13,148,136,.3)}
+.atc-glow{position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(20,184,166,.18),transparent 70%);pointer-events:none}
+.atc-glow2{position:absolute;bottom:-60px;left:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(13,148,136,.1),transparent 70%);pointer-events:none}
+.atc-inner{padding:1.25rem;position:relative;z-index:1}
+.atc-label{display:flex;align-items:center;gap:.4rem;font-size:.65rem;color:var(--teal3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:.4rem}
+.atc-label-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+.atc-title{font-family:var(--font-h);font-size:1.15rem;font-weight:700;margin-bottom:1rem}
+.atc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1rem}
+.atc-stat{background:rgba(0,0,0,.25);border-radius:12px;padding:.65rem .4rem;text-align:center;border:1px solid rgba(255,255,255,.05)}
+.atc-stat-val{font-family:var(--font-h);font-size:1rem;font-weight:700;color:var(--teal3)}
+.atc-stat-lbl{font-size:.55rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+.atc-cta{background:rgba(13,148,136,.2);border:1px solid rgba(13,148,136,.35);border-radius:10px;padding:.65rem 1rem;font-size:.82rem;font-weight:600;color:var(--teal3);width:100%;text-align:center;transition:background .2s;font-family:var(--font-h)}
+.atc-cta:active{background:rgba(13,148,136,.35)}
+
+.fab-wrap{position:fixed;right:1.25rem;bottom:calc(var(--nav-h) + var(--safe-bot) + 1rem);z-index:50;display:flex;flex-direction:column-reverse;align-items:flex-end;gap:.6rem}
+.fab-main{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--teal),var(--teal2));box-shadow:0 4px 20px var(--teal-glow);display:flex;align-items:center;justify-content:center;transition:transform .2s}
+.fab-main.open{transform:rotate(45deg)}
+.fab-main svg{width:22px;height:22px;color:white}
+.fab-sub{display:flex;align-items:center;gap:.6rem;opacity:0;transform:translateY(10px) scale(.9);transition:all .2s;pointer-events:none}
+.fab-sub.show{opacity:1;transform:translateY(0) scale(1);pointer-events:all}
+.fab-sub-btn{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.fab-sub-label{font-size:.75rem;font-weight:500;color:var(--text2);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px 10px;white-space:nowrap}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem .4rem}
+.section-title{font-family:var(--font-h);font-size:.95rem;font-weight:700}
+.section-link{font-size:.75rem;color:var(--teal2);cursor:pointer}
+
+.trek-card{margin:0 1.25rem .75rem;background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;transition:transform .15s}
+.trek-card:active{transform:scale(.98)}
+.trek-card-img{height:150px;display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative}
+.trek-img-grad{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(15,30,45,.9))}
+.trek-card-badge{position:absolute;top:.75rem;left:.75rem;padding:3px 10px;border-radius:99px;font-size:.65rem;font-weight:700;font-family:var(--font-h);letter-spacing:.05em;text-transform:uppercase}
+.badge-easy{background:rgba(34,197,94,.18);color:#4ADE80;border:1px solid rgba(34,197,94,.3)}
+.badge-medium{background:rgba(245,158,11,.18);color:#FCD34D;border:1px solid rgba(245,158,11,.3)}
+.badge-hard{background:rgba(239,68,68,.18);color:#FCA5A5;border:1px solid rgba(239,68,68,.3)}
+.trek-card-body{padding:.875rem 1rem}
+.trek-card-name{font-family:var(--font-h);font-size:.97rem;font-weight:700;margin-bottom:.25rem}
+.trek-card-meta{font-size:.75rem;color:var(--text2);margin-bottom:.75rem}
+.trek-card-footer{display:flex;align-items:center;justify-content:space-between}
+.trek-stats-row{display:flex;gap:.875rem}
+.trek-stat-chip{display:flex;align-items:center;gap:3px;font-size:.72rem;color:var(--text2)}
+.trek-actions-row{display:flex;gap:.4rem}
+.icon-btn{width:32px;height:32px;background:var(--bg3);border-radius:9px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);transition:all .2s;font-size:.85rem}
+.icon-btn.active-like{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.1)}
+.icon-btn.active-save{border-color:rgba(13,148,136,.4);background:rgba(13,148,136,.1)}
+
+.tips-scroll{display:flex;gap:.75rem;overflow-x:auto;padding:0 1.25rem;padding-bottom:.5rem}
+.tips-scroll::-webkit-scrollbar{display:none}
+.tip-card{flex-shrink:0;width:200px;background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:.875rem;display:flex;flex-direction:column;gap:.35rem}
+.tip-icon{font-size:1.3rem}
+.tip-title{font-size:.8rem;font-weight:600;font-family:var(--font-h)}
+.tip-text{font-size:.7rem;color:var(--text2);line-height:1.5}
+
+/* ══════════════════ MAP ══════════════════ */
+.map-container{flex:1;position:relative;min-height:0}
+#map-el{width:100%;height:100%}
+.leaflet-tile-pane{filter:brightness(.82) saturate(.8) hue-rotate(15deg)}
+.leaflet-container{background:#070F1A!important;font-family:var(--font-b)!important}
+.leaflet-control-attribution{background:rgba(7,15,26,.75)!important;color:var(--text3)!important;font-size:.58rem!important;padding:2px 6px!important}
+.leaflet-control-zoom{border:none!important;border-radius:12px!important;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.4)!important}
+.leaflet-control-zoom a{background:rgba(12,24,36,.9)!important;backdrop-filter:blur(12px)!important;color:var(--text)!important;border:1px solid var(--border)!important;width:34px!important;height:34px!important;line-height:32px!important;font-size:1rem!important}
+.leaflet-popup-content-wrapper{background:var(--card2)!important;border:1px solid var(--border2)!important;border-radius:14px!important;color:var(--text)!important;box-shadow:0 8px 32px rgba(0,0,0,.5)!important}
+.leaflet-popup-tip{background:var(--card2)!important}
+.leaflet-popup-close-button{color:var(--text2)!important}
+
+.map-top-row{position:absolute;top:calc(var(--safe-top) + .875rem);left:.875rem;right:.875rem;z-index:400;display:flex;gap:.5rem;pointer-events:none}
+.map-btn{pointer-events:all;background:rgba(7,15,26,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border2);border-radius:12px;padding:.6rem .9rem;font-size:.78rem;font-weight:500;color:var(--text);display:flex;align-items:center;gap:.4rem;transition:all .2s;white-space:nowrap;font-family:var(--font-b)}
+.map-btn svg{width:14px;height:14px;flex-shrink:0}
+.map-btn:active{transform:scale(.96)}
+.map-btn.tracking{background:rgba(13,148,136,.22);border-color:rgba(13,148,136,.45);color:var(--teal3)}
+.map-spacer{flex:1}
+
+.dl-progress-box{position:absolute;top:calc(var(--safe-top) + 4rem);left:.875rem;right:.875rem;z-index:400;background:rgba(7,15,26,.92);backdrop-filter:blur(16px);border:1px solid var(--border2);border-radius:14px;padding:.875rem 1rem;display:none}
+.dl-prog-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.dl-prog-title{font-size:.8rem;font-weight:600;color:var(--teal3);font-family:var(--font-h)}
+.dl-prog-pct{font-size:.75rem;color:var(--text2)}
+.dl-prog-track{height:4px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.dl-prog-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal3));width:0%;transition:width .08s linear;border-radius:99px}
+.dl-prog-info{font-size:.68rem;color:var(--text3);margin-top:.4rem}
+
+.gps-bar{position:absolute;bottom:calc(var(--nav-h) + var(--safe-bot) + .875rem);left:.875rem;right:.875rem;z-index:400;background:rgba(7,15,26,.88);backdrop-filter:blur(16px);border:1px solid var(--border2);border-radius:12px;padding:.6rem .9rem;display:flex;align-items:center;gap:.6rem;font-size:.78rem}
+.gps-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gps-indicator.off{background:var(--text3)}
+.gps-indicator.searching{background:var(--amber);animation:pulse 1s infinite}
+.gps-indicator.active{background:var(--green);box-shadow:0 0 8px var(--green)}
+.gps-indicator.error{background:var(--red)}
+
+.map-stats-bar{position:absolute;bottom:calc(var(--nav-h) + var(--safe-bot) + 3.5rem);left:.875rem;right:.875rem;z-index:400;background:rgba(7,15,26,.92);backdrop-filter:blur(16px);border:1px solid rgba(13,148,136,.28);border-radius:14px;padding:.75rem 1rem;display:none}
+.map-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.25rem}
+.map-s-item{text-align:center}
+.map-s-val{font-family:var(--font-h);font-size:.95rem;font-weight:700;color:var(--teal3)}
+.map-s-lbl{font-size:.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:1px}
+
+/* Geofence alert */
+.geo-alert{position:absolute;top:calc(var(--safe-top) + 4.5rem);left:.875rem;right:.875rem;z-index:450;background:rgba(239,68,68,.18);border:1.5px solid rgba(239,68,68,.5);backdrop-filter:blur(12px);border-radius:12px;padding:.65rem 1rem;display:none;align-items:center;gap:.5rem;font-size:.8rem;font-weight:500;color:var(--red2)}
+.geo-alert.show{display:flex;animation:fadeUp .3s ease}
+
+/* ══════════════════ WAYPOINTS ══════════════════ */
+.wp-topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-top) + .9rem) 1.25rem .75rem;background:rgba(7,15,26,.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.wp-topbar-left{display:flex;flex-direction:column;gap:2px}
+.wp-screen-title{font-family:var(--font-h);font-size:1.1rem;font-weight:700}
+.wp-count-text{font-size:.72rem;color:var(--text2)}
+.wp-add-btn{background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:11px;padding:.45rem .95rem;font-family:var(--font-h);font-size:.8rem;font-weight:700;color:#fff}
+.wp-filter-row{display:flex;gap:.5rem;overflow-x:auto;padding:.75rem 1.25rem;border-bottom:1px solid var(--border)}
+.wp-filter-row::-webkit-scrollbar{display:none}
+.wp-filter-chip{flex-shrink:0;padding:.35rem .8rem;border-radius:99px;font-size:.72rem;font-weight:500;border:1px solid var(--border2);color:var(--text2);background:var(--bg3);transition:all .2s;cursor:pointer}
+.wp-filter-chip.active{background:rgba(13,148,136,.18);border-color:var(--teal);color:var(--teal3)}
+.wp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;padding:.875rem 1.25rem}
+.wp-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:transform .15s,border-color .2s;cursor:pointer}
+.wp-card:active{transform:scale(.96)}
+.wp-thumb{height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;position:relative}
+.wp-cat-tag{position:absolute;top:.4rem;right:.4rem;font-size:.58rem;padding:2px 7px;border-radius:99px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.wp-card-info{padding:.6rem .75rem .7rem}
+.wp-card-name{font-family:var(--font-h);font-size:.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.wp-card-sub{font-size:.65rem;color:var(--text3)}
+.wp-empty-state{grid-column:1/-1;text-align:center;padding:3.5rem 1rem}
+.wp-empty-emoji{font-size:3rem;margin-bottom:.75rem}
+.wp-empty-msg{font-size:.875rem;line-height:1.65;color:var(--text2)}
+
+/* Timeline */
+.timeline-section{padding:.5rem 1.25rem}
+.tl-item{display:flex;gap:.875rem;padding:.6rem 0;position:relative}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:14px;top:28px;bottom:-8px;width:1px;background:var(--border2)}
+.tl-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;border:2px solid var(--bg)}
+.tl-body{flex:1;padding-top:3px}
+.tl-title{font-size:.82rem;font-weight:600}
+.tl-time{font-size:.65rem;color:var(--text3);margin-top:2px}
+.tl-note{font-size:.75rem;color:var(--text2);margin-top:.25rem;line-height:1.5}
+
+/* ══════════════════ CHAT ══════════════════ */
+.chat-topbar{display:flex;align-items:center;gap:.75rem;padding:calc(var(--safe-top) + .9rem) 1.25rem .75rem;background:rgba(7,15,26,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-bot-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1E1B4B,#4338CA);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;box-shadow:0 0 0 2px rgba(99,102,241,.3)}
+.chat-bot-info{flex:1}
+.chat-bot-name{font-family:var(--font-h);font-size:.97rem;font-weight:700}
+.chat-bot-status{display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--text2);margin-top:1px}
+.status-dot{width:6px;height:6px;border-radius:50%}
+.status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green)}
+.status-dot.offline{background:var(--amber)}
+.chat-messages{flex:1;overflow-y:auto;padding:.875rem 1rem;display:flex;flex-direction:column;gap:.75rem}
+.chat-messages::-webkit-scrollbar{display:none}
+.msg{max-width:82%;animation:fadeUp .2s ease}
+.msg.user{align-self:flex-end}
+.msg.bot{align-self:flex-start}
+.msg-bubble{padding:.65rem .95rem;border-radius:16px;font-size:.87rem;line-height:1.6}
+.msg.user .msg-bubble{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border-bottom-right-radius:4px}
+.msg.bot .msg-bubble{background:var(--card2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.msg-time{font-size:.6rem;color:var(--text3);margin-top:3px}
+.msg.user .msg-time{text-align:right}
+.msg.system{align-self:center}
+.msg.system .msg-bubble{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--amber);font-size:.75rem;text-align:center;border-radius:10px}
+.typing-dots{display:flex;gap:4px;padding:.65rem .9rem;background:var(--card2);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:typingBounce 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+.chat-suggest{padding:.5rem 1rem;display:flex;gap:.5rem;overflow-x:auto;flex-shrink:0;border-top:1px solid var(--border)}
+.chat-suggest::-webkit-scrollbar{display:none}
+.suggest-chip{flex-shrink:0;padding:.4rem .85rem;background:var(--bg3);border:1px solid var(--border2);border-radius:99px;font-size:.72rem;color:var(--text2);white-space:nowrap;cursor:pointer;transition:all .2s}
+.suggest-chip:active{background:rgba(13,148,136,.15);border-color:var(--teal);color:var(--teal3)}
+.chat-input-bar{display:flex;gap:.5rem;padding:.7rem 1rem;background:rgba(7,15,26,.92);backdrop-filter:blur(20px);border-top:1px solid var(--border);flex-shrink:0}
+.chat-input-wrap{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:13px;display:flex;align-items:center;padding:.5rem .875rem;gap:.5rem;transition:border-color .2s}
+.chat-input-wrap:focus-within{border-color:var(--teal)}
+.chat-text-input{flex:1;font-size:.88rem;color:var(--text);background:none;border:none;outline:none;min-width:0}
+.chat-send-btn{width:40px;height:40px;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .1s}
+.chat-send-btn:active{transform:scale(.92)}
+.source-badge{display:inline-block;font-size:.62rem;padding:2px 8px;border-radius:99px;background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.25);color:var(--teal3);margin-top:.4rem}
+
+/* ══════════════════ SOS ══════════════════ */
+.sos-scroll{overflow-y:auto;padding:0 1.25rem 1rem}
+.sos-scroll::-webkit-scrollbar{display:none}
+.sos-hero{text-align:center;padding:1.5rem 0 1.25rem}
+.sos-hero-title{font-family:var(--font-h);font-size:1.25rem;font-weight:800}
+.sos-hero-sub{font-size:.82rem;color:var(--text2);margin-top:.4rem;line-height:1.6;max-width:280px;margin-left:auto;margin-right:auto}
+.sos-btn-zone{display:flex;align-items:center;justify-content:center;padding:1.5rem 0;position:relative}
+.sos-pulse-ring{position:absolute;width:150px;height:150px;border-radius:50%;border:1.5px solid rgba(239,68,68,.3);animation:sosPulse 2.2s ease-out infinite}
+.sos-pulse-ring.r2{animation-delay:.7s;width:180px;height:180px}
+.sos-pulse-ring.r3{animation-delay:1.4s;width:210px;height:210px}
+.sos-main-btn{width:130px;height:130px;border-radius:50%;background:linear-gradient(145deg,#B91C1C,#EF4444);border:none;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;cursor:pointer;position:relative;box-shadow:0 0 0 1px rgba(239,68,68,.3),0 8px 40px rgba(239,68,68,.35);transition:transform .08s;user-select:none;-webkit-user-select:none;touch-action:none}
+.sos-main-btn:active{transform:scale(.95)}
+.sos-btn-label{font-family:var(--font-h);font-size:1.5rem;font-weight:800;letter-spacing:.05em}
+.sos-btn-sub{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;opacity:.75}
+.sos-svg-ring{position:absolute;top:-3px;left:-3px;pointer-events:none}
+.sos-ring-circle{stroke-dasharray:415;stroke-dashoffset:415;transition:stroke-dashoffset .1s linear;transform-origin:center;transform:rotate(-90deg)}
+.sos-info-row{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.875rem 1rem;margin-bottom:.75rem}
+.sos-info-label{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;font-weight:600}
+.sos-info-val{font-size:.88rem;font-weight:500}
+.contact-section-title{font-family:var(--font-h);font-size:.9rem;font-weight:700;margin-bottom:.6rem}
+.contact-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+.contact-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--bg3),var(--card2));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--teal3);flex-shrink:0}
+.contact-details{flex:1;min-width:0}
+.contact-name{font-size:.875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-phone{font-size:.72rem;color:var(--text3)}
+.contact-del-btn{color:var(--text3);font-size:1rem;padding:.25rem;flex-shrink:0;transition:color .2s}
+.contact-del-btn:active{color:var(--red)}
+.add-contact-row{border:1.5px dashed var(--border2);border-radius:13px;padding:.75rem 1rem;display:flex;align-items:center;justify-content:center;gap:.5rem;color:var(--text2);font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:.5rem}
+.add-contact-row:active{border-color:var(--teal);color:var(--teal3)}
+.sos-history-title{font-family:var(--font-h);font-size:.9rem;font-weight:700;margin:.875rem 0 .5rem}
+.sos-hist-item{background:var(--card);border-left:3px solid var(--red);border-radius:0 10px 10px 0;padding:.6rem .875rem;margin-bottom:.4rem;display:flex;align-items:flex-start;justify-content:space-between}
+.sos-hist-time{font-size:.75rem;color:var(--text2)}
+.sos-hist-coords{font-size:.68rem;color:var(--text3);font-family:monospace}
+
+.sos-overlay{position:fixed;inset:0;z-index:600;background:linear-gradient(160deg,#450a0a,#7f1d1d,#991b1b);display:none;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:.75rem;padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sos-overlay.show{display:flex}
+.sos-ov-flash{font-family:var(--font-h);font-size:1.75rem;font-weight:800;text-align:center;animation:sosFlash .9s infinite}
+.sos-ov-card{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1rem 1.25rem;width:100%;max-width:320px}
+.sos-ov-row{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:.85rem}
+.sos-ov-row:last-child{border-bottom:none}
+.sos-ov-key{color:rgba(255,255,255,.6)}
+.sos-ov-val{color:#fff;font-weight:500;font-size:.8rem;max-width:65%;text-align:right}
+.sos-ov-status{color:#86EFAC}
+.sos-cancel-btn{background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.4);border-radius:14px;padding:.875rem 2rem;color:#fff;font-family:var(--font-h);font-size:.95rem;font-weight:600;cursor:pointer}
+.sos-cancel-btn:active{background:rgba(0,0,0,.6)}
+
+/* ══════════════════ MODALS ══════════════════ */
+.overlay-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:150;display:none;align-items:flex-end}
+.overlay-backdrop.open{display:flex}
+.bottom-sheet{background:var(--bg2);border-radius:22px 22px 0 0;border-top:1px solid var(--border2);width:100%;padding:1.25rem;padding-bottom:calc(1.25rem + var(--safe-bot));max-height:92vh;overflow-y:auto;animation:sheetUp .3s cubic-bezier(.34,1.2,.64,1)}
+.bottom-sheet::-webkit-scrollbar{display:none}
+.sheet-handle{width:40px;height:4px;background:var(--border2);border-radius:99px;margin:0 auto 1.25rem}
+.sheet-title{font-family:var(--font-h);font-size:1.1rem;font-weight:700;margin-bottom:1.25rem}
+.sheet-field-label{font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}
+.sheet-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:.75rem 1rem;font-size:.9rem;color:var(--text);margin-bottom:1rem;transition:border-color .2s}
+.sheet-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.cat-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.cat-chip{padding:.4rem .85rem;border-radius:99px;font-size:.75rem;font-weight:500;border:1px solid var(--border2);color:var(--text2);background:var(--bg3);cursor:pointer;transition:all .2s}
+.cat-chip.sel{background:rgba(13,148,136,.18);border-color:var(--teal);color:var(--teal3)}
+.sheet-btn-row{display:flex;gap:.6rem;margin-top:.25rem}
+.btn-cancel{flex:1;padding:.8rem;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;color:var(--text2);font-family:var(--font-h);font-size:.88rem;font-weight:600}
+.btn-save{flex:2;padding:.8rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:12px;color:#fff;font-family:var(--font-h);font-size:.88rem;font-weight:700}
+.geo-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;padding:3px 10px;border-radius:99px;background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.2);color:var(--teal3);margin-bottom:.75rem}
+
+/* ══════════════════ TOAST ══════════════════ */
+.toast{position:fixed;top:calc(var(--safe-top) + 1rem);left:50%;transform:translateX(-50%) translateY(-80px);z-index:500;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:.65rem 1.25rem;font-size:.82rem;font-weight:500;max-width:320px;text-align:center;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;white-space:nowrap;display:flex;align-items:center;gap:.5rem}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.1);color:#4ADE80}
+.toast.error{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#FCA5A5}
+.toast.info{border-color:rgba(13,148,136,.3);background:rgba(13,148,136,.1);color:var(--teal3)}
+.toast.warn{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.1);color:var(--amber)}
+
+/* ══════════════════ ANIMATIONS ══════════════════ */
+@keyframes logoIn{from{transform:scale(0) rotate(-18deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+@keyframes sosPulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.6);opacity:0}}
+@keyframes sosFlash{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* GPS Permission Card */
+.gps-perm-card{position:absolute;bottom:calc(var(--nav-h) + var(--safe-bot) + .875rem);left:.875rem;right:.875rem;z-index:400;background:rgba(7,15,26,.96);backdrop-filter:blur(16px);border:1.5px solid rgba(245,158,11,.4);border-radius:14px;padding:.9rem 1rem}
+.gps-perm-title{font-family:var(--font-h);font-size:.88rem;font-weight:700;color:var(--amber);margin-bottom:.4rem}
+.gps-perm-body{font-size:.78rem;color:var(--text2);line-height:1.6;margin-bottom:.6rem}
+.gps-perm-steps{font-size:.74rem;color:var(--text2);line-height:1.9;margin-bottom:.7rem}
+.gps-perm-steps b{color:var(--text)}
+.gps-perm-btn{background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:10px;padding:.5rem 1.2rem;font-family:var(--font-h);font-size:.8rem;font-weight:700;color:#fff;width:100%;text-align:center}
+
+/* ── Location Permission Boot Modal ── */
+.loc-modal{position:fixed;inset:0;z-index:600;background:rgba(7,15,26,.97);backdrop-filter:blur(24px);display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.loc-modal-box{background:var(--card);border:1px solid var(--border2);border-radius:24px;padding:2rem 1.5rem;width:100%;max-width:360px;text-align:center}
+.loc-modal-icon{font-size:3.5rem;margin-bottom:1rem}
+.loc-modal-title{font-family:var(--font-h);font-size:1.4rem;font-weight:800;margin-bottom:.6rem}
+.loc-modal-sub{font-size:.84rem;color:var(--text2);line-height:1.7;margin-bottom:1.5rem}
+.loc-modal-btn{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:14px;font-family:var(--font-h);font-size:1rem;font-weight:700;color:#fff;margin-bottom:.75rem;box-shadow:0 4px 20px var(--teal-glow)}
+.loc-modal-skip{width:100%;padding:.75rem;background:transparent;border:1px solid var(--border2);border-radius:14px;font-size:.88rem;color:var(--text2)}
+.loc-modal-note{font-size:.7rem;color:var(--text3);margin-top:1rem;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<!-- Location Setup Modal — works even without GPS/network -->
+<div id="loc-modal" class="loc-modal" style="display:none">
+  <div class="loc-modal-box">
+    <div class="loc-modal-icon">📍</div>
+    <div class="loc-modal-title">Set Your Location</div>
+    <div class="loc-modal-sub" id="loc-modal-sub">TrekMate will try GPS automatically. You can also enter coordinates manually for SOS and map.</div>
+    <button class="loc-modal-btn" id="loc-allow-btn" onclick="requestLocationPermission()">📍 Use My GPS Location</button>
+    <div style="display:flex;align-items:center;gap:.75rem;margin:.6rem 0">
+      <div style="flex:1;height:1px;background:var(--border2)"></div>
+      <span style="font-size:.72rem;color:var(--text3)">or enter manually</span>
+      <div style="flex:1;height:1px;background:var(--border2)"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.6rem">
+      <input id="manual-lat" type="number" step="0.00001" placeholder="Latitude (e.g. 18.5204)"
+        style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:.65rem .75rem;font-size:.82rem;color:var(--text);outline:none"/>
+      <input id="manual-lng" type="number" step="0.00001" placeholder="Longitude (e.g. 73.8567)"
+        style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:.65rem .75rem;font-size:.82rem;color:var(--text);outline:none"/>
+    </div>
+    <button class="loc-modal-btn" style="background:linear-gradient(135deg,#3B82F6,#6366F1);margin-bottom:.5rem" onclick="useManualLocation()">📌 Use These Coordinates</button>
+    <button class="loc-modal-skip" onclick="skipLocation()">Skip — use default (Pune)</button>
+    <div class="loc-modal-note">💡 Find your coordinates: open Google Maps → long press your location → copy the numbers shown at the top.</div>
+  </div>
+</div>
+
+<div id="splash" class="screen active">
+  <div class="sp-bg">
+    <svg viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <polygon points="0,580 70,280 150,460 230,120 310,380 390,200 390,844 0,844" fill="rgba(255,255,255,.04)"/>
+      <polygon points="0,680 90,400 170,560 250,300 330,480 390,360 390,844 0,844" fill="rgba(255,255,255,.025)"/>
+      <circle cx="330" cy="100" r="2" fill="rgba(255,255,255,.4)"/><circle cx="60" cy="180" r="1.5" fill="rgba(255,255,255,.3)"/>
+      <circle cx="200" cy="60" r="1" fill="rgba(255,255,255,.35)"/><circle cx="350" cy="300" r="1.5" fill="rgba(255,255,255,.25)"/>
+    </svg>
+  </div>
+  <div class="sp-content">
+    <div class="sp-logo-ring">🏔️</div>
+    <div class="sp-title">TrekMate</div>
+    <div class="sp-tagline">Your Adventure Companion</div>
+    <div class="sp-bar-track"><div class="sp-bar" id="sp-bar"></div></div>
+  </div>
+  <div class="sp-version">v3.0 · Full Fledge · Offline First</div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding" class="screen">
+  <div class="ob-wrap">
+    <div class="ob-badge">🏔️ &nbsp;Welcome, Trekker</div>
+    <div class="ob-title">Set Up Your<br/><span>Profile</span></div>
+    <div class="ob-sub">Personalise your adventure. Your data is stored offline on this device.</div>
+    <div class="ob-card">
+      <div class="ob-field-label">Your Name</div>
+      <input class="ob-input" id="ob-name" type="text" placeholder="e.g. Rahul Sharma" autocomplete="name"/>
+      <div class="ob-field-label">Emergency Contact Phone</div>
+      <input class="ob-input" id="ob-phone" type="tel" placeholder="+91 98765 43210 (with country code)" autocomplete="tel"/>
+      <div class="ob-field-label">Blood Type (optional)</div>
+      <input class="ob-input" id="ob-blood" type="text" placeholder="e.g. B+" style="margin-bottom:0"/>
+    </div>
+    <button class="btn-primary" onclick="finishOnboarding()">Start Trekking →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main" class="screen">
+
+  <!-- HOME TAB -->
+  <div id="tab-home" class="tab-content">
+    <div class="home-topbar">
+      <div class="top-avatar" id="user-avatar">T</div>
+      <div class="top-info">
+        <div class="top-greeting" id="greeting-text">Good Morning ☀️</div>
+        <div class="top-name" id="user-name-display">Trekker</div>
+      </div>
+      <div class="top-actions">
+        <span class="conn-badge online" id="conn-badge"><span class="conn-dot"></span><span id="conn-text">Online</span></span>
+        <button class="top-icon-btn" onclick="showToast('Notifications ready','info')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stories -->
+    <div class="stories-section">
+      <div class="stories-scroll">
+        <div class="story-item" onclick="showToast('Sinhagad Fort – 749m','info')"><div class="story-ring"><div class="story-inner">🏔️</div></div><div class="story-name">Sinhagad</div></div>
+        <div class="story-item" onclick="showToast('Rajgad Fort – 1376m','info')"><div class="story-ring"><div class="story-inner">🌲</div></div><div class="story-name">Rajgad</div></div>
+        <div class="story-item" onclick="showToast('Torna Fort – 1404m','info')"><div class="story-ring"><div class="story-inner">⛰️</div></div><div class="story-name">Torna</div></div>
+        <div class="story-item" onclick="showToast('Harishchandragad – 1424m','info')"><div class="story-ring"><div class="story-inner">🌄</div></div><div class="story-name">Harish...</div></div>
+        <div class="story-item" onclick="showToast('Kalsubai – 1646m (highest in Maha!)','info')"><div class="story-ring"><div class="story-inner">🗻</div></div><div class="story-name">Kalsubai</div></div>
+        <div class="story-add" onclick="showToast('Add your own route','info')">+</div>
+      </div>
+    </div>
+
+    <!-- Active Trek Card -->
+    <div class="active-trek-card">
+      <div class="atc-glow"></div><div class="atc-glow2"></div>
+      <div class="atc-inner">
+        <div class="atc-label"><span class="atc-label-dot"></span><span id="atc-status-label">Ready to Trek</span></div>
+        <div class="atc-title" id="atc-title">Start a new adventure</div>
+        <div class="atc-stats">
+          <div class="atc-stat"><div class="atc-stat-val" id="home-dist">0.0</div><div class="atc-stat-lbl">km</div></div>
+          <div class="atc-stat"><div class="atc-stat-val" id="home-time">00:00</div><div class="atc-stat-lbl">time</div></div>
+          <div class="atc-stat"><div class="atc-stat-val" id="home-elev">0</div><div class="atc-stat-lbl">m elev</div></div>
+          <div class="atc-stat"><div class="atc-stat-val" id="home-pace">--</div><div class="atc-stat-lbl">min/km</div></div>
+        </div>
+        <button class="atc-cta" onclick="goToMap()">Open Map & Start Tracking →</button>
+      </div>
+    </div>
+
+    <!-- Safety Tips -->
+    <div class="section-header">
+      <div class="section-title">Safety Tips</div>
+      <div class="section-link">More</div>
+    </div>
+    <div class="tips-scroll">
+      <div class="tip-card"><div class="tip-icon">💧</div><div class="tip-title">Stay Hydrated</div><div class="tip-text">Drink 3–4L per day. Dark urine = dehydration danger.</div></div>
+      <div class="tip-card"><div class="tip-icon">🌦️</div><div class="tip-title">Weather Signs</div><div class="tip-text">Lenticular clouds = high winds. Start treks before 7am.</div></div>
+      <div class="tip-card"><div class="tip-icon">🐍</div><div class="tip-title">Watch Your Step</div><div class="tip-text">Shuffle feet in tall grass. Check rocks before sitting.</div></div>
+      <div class="tip-card"><div class="tip-icon">🧭</div><div class="tip-title">Tell Someone</div><div class="tip-text">Share your route + ETA before trekking solo.</div></div>
+      <div class="tip-card"><div class="tip-icon">🆘</div><div class="tip-title">Know SOS</div><div class="tip-text">3 whistle blasts = distress. India rescue: 112.</div></div>
+    </div>
+
+    <!-- Trek Feed -->
+    <div class="section-header" style="margin-top:.5rem">
+      <div class="section-title">Nearby Trails</div>
+      <div class="section-link" onclick="showToast('All trails coming soon','info')">See all</div>
+    </div>
+    <div class="trek-card" style="animation:cardIn .4s ease">
+      <div class="trek-card-img" style="background:linear-gradient(135deg,#062620,#0e3d37)">🏔️<div class="trek-img-grad"></div><span class="trek-card-badge badge-hard">Hard</span></div>
+      <div class="trek-card-body">
+        <div class="trek-card-name">Harishchandragad Fort</div>
+        <div class="trek-card-meta">Ahmednagar, Maharashtra · 14.2 km</div>
+        <div class="trek-card-footer">
+          <div class="trek-stats-row"><div class="trek-stat-chip">↑ 1424 m</div><div class="trek-stat-chip">⏱ 8 hr</div></div>
+          <div class="trek-actions-row"><button class="icon-btn" onclick="toggleLike(this)">❤️</button><button class="icon-btn" onclick="toggleSave(this)">🔖</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="trek-card" style="animation:cardIn .5s ease">
+      <div class="trek-card-img" style="background:linear-gradient(135deg,#0a2e1a,#1a4a28)">🌲<div class="trek-img-grad"></div><span class="trek-card-badge badge-medium">Medium</span></div>
+      <div class="trek-card-body">
+        <div class="trek-card-name">Rajgad Fort Trek</div>
+        <div class="trek-card-meta">Pune, Maharashtra · 8.6 km</div>
+        <div class="trek-card-footer">
+          <div class="trek-stats-row"><div class="trek-stat-chip">↑ 1376 m</div><div class="trek-stat-chip">⏱ 5 hr</div></div>
+          <div class="trek-actions-row"><button class="icon-btn" onclick="toggleLike(this)">❤️</button><button class="icon-btn" onclick="toggleSave(this)">🔖</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="trek-card" style="animation:cardIn .6s ease">
+      <div class="trek-card-img" style="background:linear-gradient(135deg,#1a1a2e,#2d2d5e)">⛰️<div class="trek-img-grad"></div><span class="trek-card-badge badge-easy">Easy</span></div>
+      <div class="trek-card-body">
+        <div class="trek-card-name">Sinhagad Fort Walk</div>
+        <div class="trek-card-meta">Pune, Maharashtra · 4.1 km</div>
+        <div class="trek-card-footer">
+          <div class="trek-stats-row"><div class="trek-stat-chip">↑ 749 m</div><div class="trek-stat-chip">⏱ 2 hr</div></div>
+          <div class="trek-actions-row"><button class="icon-btn" onclick="toggleLike(this)">❤️</button><button class="icon-btn" onclick="toggleSave(this)">🔖</button></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:.5rem"></div>
+  </div>
+
+  <!-- FAB -->
+  <div class="fab-wrap" id="fab-wrap">
+    <button class="fab-main" id="fab-main-btn" onclick="toggleFAB()">
+      <svg fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div class="fab-sub" id="fab-sub-sos"><span class="fab-sub-label">SOS Emergency</span><button class="fab-sub-btn" style="background:#EF4444;box-shadow:0 0 16px rgba(239,68,68,.4)" onclick="goToSOS()">🆘</button></div>
+    <div class="fab-sub" id="fab-sub-wp"><span class="fab-sub-label">Mark Waypoint</span><button class="fab-sub-btn" style="background:#3B82F6;box-shadow:0 0 12px rgba(59,130,246,.35)" onclick="openWPSheet()">📍</button></div>
+    <div class="fab-sub" id="fab-sub-trek"><span class="fab-sub-label">Start New Trek</span><button class="fab-sub-btn" style="background:#22C55E;box-shadow:0 0 12px rgba(34,197,94,.35)" onclick="goToMap()">▶</button></div>
+  </div>
+
+  <!-- MAP TAB -->
+  <div id="tab-map" style="display:none;flex-direction:column;height:100%;position:relative">
+    <div class="map-container">
+      <div id="map-el"></div>
+      <div class="map-top-row">
+        <button class="map-btn" id="gps-track-btn" onclick="toggleTracking()">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          <span id="track-btn-label">Start Tracking</span>
+        </button>
+        <div class="map-spacer"></div>
+        <button class="map-btn" onclick="openWPSheet()">📍 Waypoint</button>
+        <button class="map-btn" id="dl-tile-btn" onclick="downloadTiles()">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="dl-btn-label">Save Offline</span>
+        </button>
+      </div>
+      <div class="dl-progress-box" id="dl-box">
+        <div class="dl-prog-head"><span class="dl-prog-title">Caching map tiles...</span><span class="dl-prog-pct" id="dl-pct">0%</span></div>
+        <div class="dl-prog-track"><div class="dl-prog-fill" id="dl-fill"></div></div>
+        <div class="dl-prog-info" id="dl-info-text">Preparing...</div>
+      </div>
+      <!-- Geofence alert -->
+      <div class="geo-alert" id="geo-alert">⚠️ <span id="geo-alert-text">Approaching hazard zone!</span></div>
+      <div class="map-stats-bar" id="map-stats-bar">
+        <div class="map-stats-row">
+          <div class="map-s-item"><div class="map-s-val" id="ms-dist">0.0</div><div class="map-s-lbl">km</div></div>
+          <div class="map-s-item"><div class="map-s-val" id="ms-time">00:00</div><div class="map-s-lbl">time</div></div>
+          <div class="map-s-item"><div class="map-s-val" id="ms-pace">--</div><div class="map-s-lbl">min/km</div></div>
+          <div class="map-s-item"><div class="map-s-val" id="ms-elev">0</div><div class="map-s-lbl">m gain</div></div>
+        </div>
+      </div>
+      <!-- GPS Status Bar (normal) -->
+      <div class="gps-bar" id="gps-bar-normal">
+        <div class="gps-indicator off" id="gps-dot"></div>
+        <span id="gps-text">GPS off — tap Start Tracking</span>
+      </div>
+      <!-- GPS Permission Guide (shown when blocked) -->
+      <div class="gps-perm-card" id="gps-perm-card" style="display:none">
+        <div class="gps-perm-title">📍 Location Permission Required</div>
+        <div class="gps-perm-body" id="gps-perm-body">Enable location to use GPS tracking.</div>
+        <div class="gps-perm-steps" id="gps-perm-steps"></div>
+        <button class="gps-perm-btn" onclick="retryGPS()">🔄 Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAYPOINTS TAB -->
+  <div id="tab-waypoints" class="tab-content" style="display:none">
+    <div class="wp-topbar">
+      <div class="wp-topbar-left">
+        <div class="wp-screen-title">Waypoints</div>
+        <div class="wp-count-text" id="wp-count-label">0 saved locations</div>
+      </div>
+      <button class="wp-add-btn" onclick="openWPSheet()">+ Add</button>
+    </div>
+    <div class="wp-filter-row">
+      <div class="wp-filter-chip active" onclick="filterWP(this,'All')">All</div>
+      <div class="wp-filter-chip" onclick="filterWP(this,'Camp')">⛺ Camp</div>
+      <div class="wp-filter-chip" onclick="filterWP(this,'Summit')">🏔️ Summit</div>
+      <div class="wp-filter-chip" onclick="filterWP(this,'Water')">💧 Water</div>
+      <div class="wp-filter-chip" onclick="filterWP(this,'Hazard')">⚠️ Hazard</div>
+      <div class="wp-filter-chip" onclick="filterWP(this,'Scenic')">📸 Scenic</div>
+    </div>
+    <div class="wp-grid" id="wp-grid"></div>
+    <div style="padding:.5rem 1.25rem .25rem"><div class="section-title">Trek Timeline</div></div>
+    <div class="timeline-section" id="timeline-section">
+      <div class="tl-item">
+        <div class="tl-dot" style="background:rgba(13,148,136,.2);border-color:var(--teal)">🚶</div>
+        <div class="tl-body">
+          <div class="tl-title">App opened</div>
+          <div class="tl-time" id="tl-start-time">Just now</div>
+          <div class="tl-note">Welcome back! All data saved offline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT TAB -->
+  <div id="tab-chat" style="display:none;flex-direction:column;height:100%;position:relative">
+    <div class="chat-topbar">
+      <div class="chat-bot-avatar">🤖</div>
+      <div class="chat-bot-info">
+        <div class="chat-bot-name">TrekBot AI</div>
+        <div class="chat-bot-status"><div class="status-dot" id="bot-dot"></div><span id="bot-status-label">Checking...</span></div>
+      </div>
+      <button class="top-icon-btn" onclick="clearChat()" title="Clear">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </div>
+    <div class="chat-messages" id="chat-msgs">
+      <div class="msg bot">
+        <div class="msg-bubble">Namaste! 🏔️ I'm TrekBot — your AI trekking assistant. I work <strong>online</strong> (full AI) and <strong>offline</strong> (local knowledge base). Ask me about altitude sickness, first aid, navigation, gear, weather, or any trek emergency!</div>
+        <div class="msg-time">Now</div>
+      </div>
+    </div>
+    <div class="chat-suggest">
+      <div class="suggest-chip" onclick="quickAsk('Altitude sickness symptoms and treatment?')">Altitude sickness</div>
+      <div class="suggest-chip" onclick="quickAsk('First aid for blisters?')">Blisters</div>
+      <div class="suggest-chip" onclick="quickAsk('How to read mountain weather signs?')">Weather signs</div>
+      <div class="suggest-chip" onclick="quickAsk('Essential gear checklist for trekking?')">Gear list</div>
+      <div class="suggest-chip" onclick="quickAsk('Snake bite emergency treatment?')">Snake bite</div>
+      <div class="suggest-chip" onclick="quickAsk('Hypothermia symptoms and first aid?')">Hypothermia</div>
+      <div class="suggest-chip" onclick="quickAsk('River crossing safety tips?')">River crossing</div>
+    </div>
+    <div class="chat-input-bar">
+      <div class="chat-input-wrap">
+        <input class="chat-text-input" id="chat-input" type="text" placeholder="Ask anything about trekking..." onkeydown="if(event.key==='Enter')sendChat()"/>
+      </div>
+      <button class="chat-send-btn" onclick="sendChat()">
+        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SOS TAB -->
+  <div id="tab-sos" class="tab-content" style="display:none">
+    <div style="padding:calc(var(--safe-top) + .9rem) 1.25rem .75rem;background:rgba(7,15,26,.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20">
+      <div style="font-family:var(--font-h);font-size:1.1rem;font-weight:700">SOS &amp; Emergency</div>
+      <div style="font-size:.72rem;color:var(--text2);margin-top:2px">Hold red button 3 seconds · Sends SMS + WhatsApp to all contacts</div>
+    </div>
+    <div class="sos-scroll">
+      <div class="sos-hero">
+        <div class="sos-hero-title">🆘 Emergency SOS</div>
+        <div class="sos-hero-sub">Hold the red button for 3 seconds. Sends your live GPS location via SMS and WhatsApp to all emergency contacts instantly.</div>
+      </div>
+      <div class="sos-btn-zone">
+        <div class="sos-pulse-ring"></div><div class="sos-pulse-ring r2"></div><div class="sos-pulse-ring r3"></div>
+        <button class="sos-main-btn" id="sos-btn"
+          onmousedown="startSOS()" ontouchstart="startSOS(event)"
+          onmouseup="cancelSOS()" ontouchend="cancelSOS()"
+          onmouseleave="cancelSOS()">
+          <svg class="sos-svg-ring" width="136" height="136" viewBox="0 0 136 136">
+            <circle class="sos-ring-circle" id="sos-svg-circle" cx="68" cy="68" r="66" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+          <div class="sos-btn-label">SOS</div>
+          <div class="sos-btn-sub" id="sos-hold-hint">Hold 3s</div>
+        </button>
+      </div>
+      <!-- GPS Location Row — shows current location + allows manual override -->
+      <div class="sos-info-row">
+        <div class="sos-info-label">Your Location for SOS</div>
+        <div class="sos-info-val" id="sos-gps-display" style="margin-bottom:.5rem">Not set yet</div>
+        <div style="display:flex;gap:.4rem;margin-top:.35rem">
+          <input id="sos-lat-input" type="number" step="0.00001" placeholder="Latitude"
+            style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:.5rem .65rem;font-size:.78rem;color:var(--text);outline:none"/>
+          <input id="sos-lng-input" type="number" step="0.00001" placeholder="Longitude"
+            style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:.5rem .65rem;font-size:.78rem;color:var(--text);outline:none"/>
+          <button onclick="saveManualSOSLocation()"
+            style="background:var(--teal);border-radius:8px;padding:.5rem .7rem;font-size:.75rem;font-weight:700;color:#fff;white-space:nowrap">Set</button>
+        </div>
+        <div style="font-size:.65rem;color:var(--text3);margin-top:.35rem">
+          💡 Google Maps → long press your spot → copy the lat,lng numbers shown
+        </div>
+      </div>
+      <!-- ICE Card -->
+      <div class="sos-info-row" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)">
+        <div class="sos-info-label" style="color:var(--red)">ICE Card (In Case of Emergency)</div>
+        <div id="ice-card-display" style="font-size:.85rem;line-height:1.7">Loading your profile...</div>
+      </div>
+      <!-- Contacts -->
+      <div class="contact-section-title">Emergency Contacts</div>
+      <div id="contacts-list"></div>
+      <div class="add-contact-row" onclick="addContact()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Emergency Contact
+      </div>
+      <!-- API Settings for real SMS delivery -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.875rem 1rem;margin-bottom:.75rem">
+        <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;font-weight:600">📡 Real SMS Delivery (Fast2SMS)</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:.6rem;line-height:1.6">
+          Enter your <b style="color:var(--text)">Fast2SMS API key</b> to send real SMS automatically when online. 
+          Free at <span style="color:var(--teal3)">fast2sms.com</span> — 50 free SMS/day.
+        </div>
+        <div style="display:flex;gap:.4rem">
+          <input id="fast2sms-key" type="text" placeholder="Your Fast2SMS API key..."
+            style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+            padding:.5rem .75rem;font-size:.78rem;color:var(--text);outline:none"/>
+          <button onclick="saveFast2SMSKey()"
+            style="background:var(--teal);border-radius:8px;padding:.5rem .875rem;
+            color:#fff;font-size:.78rem;font-weight:700;white-space:nowrap">Save</button>
+        </div>
+        <div id="fast2sms-status" style="font-size:.68rem;color:var(--text3);margin-top:.35rem"></div>
+      </div>
+
+      <!-- History -->
+      <div class="sos-history-title">SOS History</div>
+      <div id="sos-history-list"><div style="font-size:.78rem;color:var(--text3);padding:.5rem 0">No SOS events recorded.</div></div>
+      <div style="height:.5rem"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" id="nav-home" onclick="switchTab('home')">
+      <div class="nav-active-bar"></div>
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-tab" id="nav-map" onclick="switchTab('map')">
+      <div class="nav-active-bar"></div>
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span>Map</span>
+    </button>
+    <button class="nav-tab" id="nav-waypoints" onclick="switchTab('waypoints')">
+      <div class="nav-active-bar"></div>
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Points</span>
+    </button>
+    <button class="nav-tab" id="nav-chat" onclick="switchTab('chat')">
+      <div class="nav-active-bar"></div>
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Chat</span>
+    </button>
+    <button class="nav-tab sos-tab" id="nav-sos" onclick="switchTab('sos')">
+      <div class="nav-active-bar"></div>
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>SOS</span>
+    </button>
+  </nav>
+</div>
+
+<!-- WAYPOINT SHEET -->
+<div class="overlay-backdrop" id="wp-backdrop" onclick="closeWPSheet()">
+  <div class="bottom-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📍 Add Waypoint</div>
+    <div class="geo-badge" id="wp-gps-badge">📡 Getting GPS location...</div>
+    <div class="sheet-field-label">Name</div>
+    <input class="sheet-input" id="wp-name-input" type="text" placeholder="e.g. Base Camp, Water Source, Summit"/>
+    <div class="sheet-field-label">Category</div>
+    <div class="cat-chips">
+      <div class="cat-chip sel" onclick="selectCat(this,'Camp')">⛺ Camp</div>
+      <div class="cat-chip" onclick="selectCat(this,'Summit')">🏔️ Summit</div>
+      <div class="cat-chip" onclick="selectCat(this,'Water')">💧 Water</div>
+      <div class="cat-chip" onclick="selectCat(this,'Hazard')">⚠️ Hazard</div>
+      <div class="cat-chip" onclick="selectCat(this,'Scenic')">📸 Scenic</div>
+    </div>
+    <div class="sheet-field-label">Notes (optional)</div>
+    <input class="sheet-input" id="wp-notes-input" type="text" placeholder="Any notes about this spot..."/>
+    <div class="sheet-btn-row">
+      <button class="btn-cancel" onclick="closeWPSheet()">Cancel</button>
+      <button class="btn-save" onclick="saveWP()">Save & Pin on Map</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOS OVERLAY -->
+<div class="sos-overlay" id="sos-overlay">
+  <div class="sos-ov-flash" style="width:100%;text-align:center">⚠️ SOS ACTIVATED ⚠️</div>
+  <div style="font-size:.82rem;color:rgba(255,255,255,.75);text-align:center;width:100%">Tap each button below to send alert</div>
+
+  <!-- Info card -->
+  <div class="sos-ov-card" style="width:100%;max-width:100%;flex-shrink:0">
+    <div class="sos-ov-row"><span class="sos-ov-key">Location</span><span class="sos-ov-val" id="ov-coords">Getting GPS...</span></div>
+    <div class="sos-ov-row"><span class="sos-ov-key">Time</span><span class="sos-ov-val" id="ov-time">--</span></div>
+    <div class="sos-ov-row"><span class="sos-ov-key">Mode</span><span class="sos-ov-val" id="ov-mode">--</span></div>
+    <div class="sos-ov-row"><span class="sos-ov-key">Status</span><span class="sos-ov-val" id="ov-status">Building links...</span></div>
+  </div>
+
+  <!-- SEND BUTTONS — populated by triggerSOS() -->
+  <div id="sos-send-zone" style="width:100%;flex-shrink:0"></div>
+
+  <button class="sos-cancel-btn" onclick="dismissSOS()" style="width:100%;flex-shrink:0;margin-top:.25rem">Cancel SOS</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast-el"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// INDEXEDDB — Offline Storage (per architecture diagram)
+// ═══════════════════════════════════════════════════════════
+const DB = {
+  db: null,
+  async open(){
+    return new Promise((res,rej)=>{
+      const req = indexedDB.open('TrekMateDB',3)
+      req.onupgradeneeded = e=>{
+        const db = e.target.result
+        if(!db.objectStoreNames.contains('waypoints')) db.createObjectStore('waypoints',{keyPath:'id'})
+        if(!db.objectStoreNames.contains('sos_history')) db.createObjectStore('sos_history',{keyPath:'id'})
+        if(!db.objectStoreNames.contains('trek_paths')) db.createObjectStore('trek_paths',{keyPath:'id'})
+        if(!db.objectStoreNames.contains('settings')) db.createObjectStore('settings',{keyPath:'key'})
+      }
+      req.onsuccess = e=>{ this.db=e.target.result; res(this.db) }
+      req.onerror = ()=>rej(req.error)
+    })
+  },
+  async put(store, data){ if(!this.db)await this.open(); return new Promise((res,rej)=>{const tx=this.db.transaction(store,'readwrite');tx.objectStore(store).put(data).onsuccess=e=>res(e.target.result);tx.onerror=()=>rej(tx.error)}) },
+  async getAll(store){ if(!this.db)await this.open(); return new Promise((res,rej)=>{const tx=this.db.transaction(store,'readonly');const req=tx.objectStore(store).getAll();req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error)}) },
+  async get(store,key){ if(!this.db)await this.open(); return new Promise((res,rej)=>{const tx=this.db.transaction(store,'readonly');const req=tx.objectStore(store).get(key);req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error)}) },
+  async delete(store,key){ if(!this.db)await this.open(); return new Promise((res,rej)=>{const tx=this.db.transaction(store,'readwrite');tx.objectStore(store).delete(key).onsuccess=()=>res();tx.onerror=()=>rej(tx.error)}) },
+}
+
+// Fallback to localStorage
+function lsGet(k,def=null){try{const v=localStorage.getItem('tm3_'+k);return v!==null?JSON.parse(v):def}catch{return def}}
+function lsSet(k,v){try{localStorage.setItem('tm3_'+k,JSON.stringify(v))}catch{}}
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  user:null, contacts:[], waypoints:[], sosHistory:[],
+  trekPath:[], trekDist:0, trekElev:0, trekStart:null,
+  prevPos:null, prevAlt:null, currentPos:null,
+  isTracking:false, watchId:null, trekTimerInt:null,
+  fabOpen:false, map:null, mapReady:false,
+  userMarker:null, pathLine:null, wpMarkers:[],
+  accuracyCircle:null,
+  sosHoldInt:null, sosProgress:0,
+  wpFilter:'All', selectedCat:'Camp',
+  isOnline:navigator.onLine,
+  geoAlertTimer:null,
+}
+
+// ═══════════════════════════════════════════════════════════
+// SPLASH & BOOT
+// ═══════════════════════════════════════════════════════════
+;(async()=>{
+  await DB.open().catch(()=>{})
+  const bar=document.getElementById('sp-bar')
+  let p=0
+  const iv=setInterval(()=>{
+    p+=1.8; bar.style.width=Math.min(p,100)+'%'
+    if(p>=100){
+      clearInterval(iv)
+      setTimeout(async()=>{
+        const userRec = await DB.get('settings','user').catch(()=>null)
+        const user = userRec?.value || lsGet('user')
+        document.getElementById('splash').classList.remove('active')
+        if(user){ S.user=user; await bootApp() }
+        else document.getElementById('onboarding').classList.add('active')
+      },350)
+    }
+  },35)
+})()
+
+async function bootApp(){
+  document.getElementById('user-name-display').textContent=S.user.name
+  document.getElementById('user-avatar').textContent=S.user.name[0].toUpperCase()
+  updateGreeting()
+  S.contacts=lsGet('contacts',[])
+  S.waypoints=(await DB.getAll('waypoints').catch(()=>[])).sort((a,b)=>b.id-a.id)
+  if(!S.waypoints.length) S.waypoints=lsGet('waypoints',[])
+  S.sosHistory=(await DB.getAll('sos_history').catch(()=>[])).sort((a,b)=>b.id-a.id)
+  renderContacts(); renderWaypoints(); renderSOSHistory(); updateICECard()
+  document.getElementById('main').classList.add('active')
+  updateConnectivity()
+  updateBotStatus()
+  // Start GPS/location system
+  startPassiveGPS()
+  // Location modal will show if GPS fails (handled in startPassiveGPS)
+}
+
+function updateGreeting(){
+  const h=new Date().getHours()
+  document.getElementById('greeting-text').textContent=h<12?'Good Morning ☀️':h<17?'Good Afternoon 🌤️':'Good Evening 🌙'
+  document.getElementById('tl-start-time').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+}
+
+// ═══════════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════════
+async function finishOnboarding(){
+  const name=document.getElementById('ob-name').value.trim()
+  const phone=document.getElementById('ob-phone').value.trim()
+  const blood=document.getElementById('ob-blood').value.trim()
+  if(!name){showToast('Please enter your name','error');return}
+  S.user={name,phone,blood}
+  await DB.put('settings',{key:'user',value:S.user}).catch(()=>{})
+  lsSet('user',S.user)
+  if(phone){
+    const cleaned=phone.replace(/[\s\-\(\)]/g,'')
+    S.contacts=[{id:Date.now(),name:'Emergency Contact',phone:cleaned,relation:'Emergency'}]
+    lsSet('contacts',S.contacts)
+  }
+  document.getElementById('onboarding').classList.remove('active')
+  await bootApp()
+  showToast('Welcome, '+name+'! 🏔️','success')
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function switchTab(tab){
+  ;['home','map','waypoints','chat','sos'].forEach(t=>{
+    const el=document.getElementById('tab-'+t)
+    if(el) el.style.display='none'
+    document.getElementById('nav-'+t)?.classList.remove('active')
+  })
+  document.getElementById('fab-wrap').style.display=tab==='home'?'flex':'none'
+  const el=document.getElementById('tab-'+tab)
+  if(el) el.style.display=(tab==='map'||tab==='chat')?'flex':'block'
+  document.getElementById('nav-'+tab)?.classList.add('active')
+  if(tab==='map'){
+    initMap()
+    // FIX 2c: Force re-render every time map tab is opened
+    if(S.map) setTimeout(()=>S.map.invalidateSize(),50)
+  }
+  if(tab==='chat') updateBotStatus()
+  if(tab==='sos') refreshSOSGPS()
+  closeFAB()
+}
+function goToMap(){switchTab('map')}
+function goToSOS(){switchTab('sos');closeFAB()}
+
+// ═══════════════════════════════════════════════════════════
+// FAB
+// ═══════════════════════════════════════════════════════════
+function toggleFAB(){
+  S.fabOpen=!S.fabOpen
+  document.getElementById('fab-main-btn').classList.toggle('open',S.fabOpen)
+  ;['sos','wp','trek'].forEach((n,i)=>{
+    const el=document.getElementById('fab-sub-'+n)
+    if(S.fabOpen) setTimeout(()=>el.classList.add('show'),i*60)
+    else el.classList.remove('show')
+  })
+}
+function closeFAB(){
+  S.fabOpen=false
+  document.getElementById('fab-main-btn')?.classList.remove('open')
+  ;['sos','wp','trek'].forEach(n=>document.getElementById('fab-sub-'+n)?.classList.remove('show'))
+}
+
+// ═══════════════════════════════════════════════════════════
+// PASSIVE GPS (runs always for SOS coords)
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// GPS SYSTEM — Real GPS + Manual fallback (no external APIs)
+// ═══════════════════════════════════════════════════════════
+function startPassiveGPS(){
+  // Restore last known location from storage first
+  const saved = lsGet('last_pos')
+  if(saved && saved.lat){
+    S.currentPos = saved
+    refreshSOSGPS()
+  }
+
+  if(!navigator.geolocation){
+    showLocModal('GPS not supported in this browser')
+    return
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      S.currentPos = {lat:pos.coords.latitude, lng:pos.coords.longitude,
+        alt:pos.coords.altitude, source:'gps'}
+      lsSet('last_pos', S.currentPos)
+      refreshSOSGPS()
+      hideLocModal()
+      if(S.map && S.mapReady){
+        placeIdleDot(S.currentPos.lat, S.currentPos.lng, pos.coords.accuracy)
+        S.map.setView([S.currentPos.lat, S.currentPos.lng], 15)
+        setGPS('active', `📍 GPS · ±${Math.round(pos.coords.accuracy)}m`)
+      }
+    },
+    err=>{
+      console.log('GPS error code:', err.code, err.message)
+      // Show manual entry modal — let user type their location
+      const msg = err.code===1
+        ? 'GPS is blocked in this context. Enter your coordinates manually.'
+        : 'GPS unavailable. Enter your coordinates manually or skip.'
+      showLocModal(msg)
+    },
+    {enableHighAccuracy:false, timeout:10000, maximumAge:120000}
+  )
+}
+
+function doPassiveGPS(){ startPassiveGPS() }
+
+function showLocModal(reason){
+  const m = document.getElementById('loc-modal')
+  const sub = document.getElementById('loc-modal-sub')
+  if(sub && reason) sub.textContent = reason
+  if(m) m.style.display = 'flex'
+}
+function hideLocModal(){
+  const m = document.getElementById('loc-modal')
+  if(m) m.style.display = 'none'
+}
+
+function requestLocationPermission(){
+  const note = document.getElementById('loc-modal-note')
+  if(note) note.textContent = 'Requesting GPS... check browser address bar for a permission popup.'
+  const btn = document.getElementById('loc-allow-btn')
+  if(btn) btn.textContent = '⏳ Requesting GPS...'
+  navigator.geolocation?.getCurrentPosition(
+    pos=>{
+      S.currentPos = {lat:pos.coords.latitude, lng:pos.coords.longitude,
+        alt:pos.coords.altitude, source:'gps'}
+      lsSet('last_pos', S.currentPos)
+      refreshSOSGPS()
+      hideLocModal()
+      if(S.map && S.mapReady){
+        placeIdleDot(S.currentPos.lat, S.currentPos.lng, pos.coords.accuracy)
+        S.map.setView([S.currentPos.lat, S.currentPos.lng], 15)
+        setGPS('active', `📍 GPS · ±${Math.round(pos.coords.accuracy)}m`)
+      }
+      showToast('📍 GPS location set!', 'success')
+    },
+    err=>{
+      if(btn) btn.textContent = '📍 Use My GPS Location'
+      if(note) note.textContent = 'GPS blocked. Please enter coordinates manually below.'
+      showToast('GPS blocked — enter coordinates manually', 'warn')
+    },
+    {enableHighAccuracy:true, timeout:12000, maximumAge:0}
+  )
+}
+
+function useManualLocation(){
+  const lat = parseFloat(document.getElementById('manual-lat')?.value)
+  const lng = parseFloat(document.getElementById('manual-lng')?.value)
+  if(isNaN(lat)||isNaN(lng)||lat<-90||lat>90||lng<-180||lng>180){
+    showToast('Enter valid coordinates (lat: -90 to 90, lng: -180 to 180)', 'error')
+    return
+  }
+  setManualPosition(lat, lng, 'manual')
+  hideLocModal()
+  showToast(`📌 Location set: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success')
+}
+
+function skipLocation(){
+  hideLocModal()
+  // Use saved last position or Pune default
+  if(!S.currentPos){
+    const saved = lsGet('last_pos')
+    if(saved && saved.lat) S.currentPos = saved
+    else S.currentPos = {lat:18.5204, lng:73.8567, alt:null, source:'default'}
+    refreshSOSGPS()
+  }
+  showToast('Using last known location', 'info')
+}
+
+function saveManualSOSLocation(){
+  const lat = parseFloat(document.getElementById('sos-lat-input')?.value)
+  const lng = parseFloat(document.getElementById('sos-lng-input')?.value)
+  if(isNaN(lat)||isNaN(lng)||lat<-90||lat>90||lng<-180||lng>180){
+    showToast('Enter valid coordinates', 'error')
+    return
+  }
+  setManualPosition(lat, lng, 'manual')
+  showToast(`📌 SOS location set: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success')
+}
+
+function setManualPosition(lat, lng, source){
+  S.currentPos = {lat, lng, alt:null, source}
+  lsSet('last_pos', S.currentPos)
+  refreshSOSGPS()
+  if(S.map && S.mapReady){
+    placeIdleDot(lat, lng, 200)
+    S.map.setView([lat, lng], 14)
+    setGPS('active', `📌 Manual location set`)
+  }
+}
+
+// getIPLocation: show manual entry modal (no external API calls needed)
+function getIPLocation(){
+  showLocModal('GPS unavailable. Enter your coordinates manually for SOS and map.')
+}
+
+// Boot location modal
+function showLocModal(){
+  const m = document.getElementById('loc-modal')
+  if(m) m.style.display='flex'
+}
+function hideLocModal(){
+  const m = document.getElementById('loc-modal')
+  if(m) m.style.display='none'
+}
+function requestLocationPermission(){
+  const note = document.getElementById('loc-modal-note')
+  if(note) note.textContent = 'Requesting location access...'
+  doPassiveGPS()
+  // Also update note to explain what happens
+  setTimeout(()=>{
+    if(note) note.textContent = 'Check the browser address bar for a location popup and click Allow.'
+  }, 1000)
+}
+function skipLocation(){
+  hideLocModal()
+  getIPLocation() // Use IP-based location as fallback
+  showToast('Using approximate location — GPS features limited', 'info')
+}
+
+function refreshSOSGPS(){
+  const el = document.getElementById('sos-gps-display')
+  if(S.currentPos && el){
+    const src = S.currentPos.source
+    const icon = src==='gps'?'📍 GPS':src==='manual'?'📌 Manual':'📡 Saved'
+    el.textContent = `${icon}: ${S.currentPos.lat.toFixed(5)}, ${S.currentPos.lng.toFixed(5)}`
+    // Pre-fill the manual input fields too
+    const latEl=document.getElementById('sos-lat-input')
+    const lngEl=document.getElementById('sos-lng-input')
+    if(latEl && !latEl.value) latEl.value = S.currentPos.lat.toFixed(5)
+    if(lngEl && !lngEl.value) lngEl.value = S.currentPos.lng.toFixed(5)
+  } else if(el){
+    el.textContent = '⚠️ Not set — enter coordinates below'
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAP — Real-time OSM + GPS + Waypoints + Geofencing
+// ═══════════════════════════════════════════════════════════
+function initMap(){
+  if(S.mapReady) return
+  S.mapReady=true
+  delete L.Icon.Default.prototype._getIconUrl
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  })
+  // FIX 2: Set BOTH map-el and map-container to explicit pixel height
+  const mapEl=document.getElementById('map-el')
+  const mapContainer=document.getElementById('tab-map')
+  const navH=68
+  const h=window.innerHeight
+  mapEl.style.height=h+'px'
+  mapEl.style.minHeight=h+'px'
+  if(mapContainer){
+    mapContainer.style.height=h+'px'
+    mapContainer.style.minHeight=h+'px'
+  }
+  S.map=L.map('map-el',{
+    center:S.currentPos?[S.currentPos.lat,S.currentPos.lng]:[20.5937,78.9629],
+    zoom:S.currentPos?15:5,
+    zoomControl:true, attributionControl:true,
+  })
+  // Real-time OSM tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+    maxZoom:19, crossOrigin:true,
+  }).addTo(S.map)
+  // FIX 1: Patch offline tile support NOW — L is definitely loaded here
+  patchLeafletOfflineSupport()
+  setTimeout(()=>{S.map.invalidateSize(); locateUser()},200)
+  window.addEventListener('resize',()=>{
+    const newH=window.innerHeight+'px'
+    mapEl.style.height=newH; mapEl.style.minHeight=newH
+    const mc=document.getElementById('tab-map')
+    if(mc){mc.style.height=newH;mc.style.minHeight=newH}
+    S.map.invalidateSize()
+  })
+  replotAllWaypoints()
+}
+
+function locateUser(){
+  setGPS('searching','Finding your location...')
+  
+  // If we already have a position (GPS or IP), use it immediately
+  if(S.currentPos && S.map){
+    const src = S.currentPos.source
+    placeIdleDot(S.currentPos.lat, S.currentPos.lng, src==='gps'?50:5000)
+    S.map.setView([S.currentPos.lat, S.currentPos.lng], src==='gps'?15:12)
+    setGPS('active', src==='gps'?`📍 GPS active`:`📡 Approx: ${S.currentPos.city||'location'}`)
+  }
+
+  if(!navigator.geolocation){
+    // No GPS — use IP location
+    getIPLocation()
+    return
+  }
+  
+  navigator.geolocation.getCurrentPosition(pos=>{
+    hidePermCard()
+    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy
+    S.currentPos={lat,lng,alt:pos.coords.altitude,source:'gps'}
+    refreshSOSGPS()
+    placeIdleDot(lat,lng,acc)
+    if(S.map) S.map.setView([lat,lng],15)
+    setGPS('active',`📍 GPS · ±${Math.round(acc)}m`)
+  },err=>{
+    console.log('Map GPS error:', err.code, err.message)
+    if(err.code === 1){
+      // Permissions denied — show manual location entry
+      setGPS('error','📍 Location blocked — enter manually')
+      showLocModal('GPS is blocked in this browser. Enter your coordinates below to use the map and SOS.')
+    } else if(err.code === 2){
+      setGPS('error','GPS unavailable — try outdoors')
+      showToast('GPS signal not found — move outdoors', 'warn')
+    } else {
+      setGPS('searching','GPS timeout — retrying...')
+      // Retry silently once more
+      setTimeout(()=>locateUser(), 3000)
+    }
+    // If we have any stored position at all, use it on the map
+    const saved = lsGet('last_pos')
+    if(saved && saved.lat && S.map){
+      S.currentPos = saved
+      placeIdleDot(saved.lat, saved.lng, 500)
+      S.map.setView([saved.lat, saved.lng], 13)
+      refreshSOSGPS()
+    }
+  },{enableHighAccuracy:false, timeout:10000, maximumAge:60000})
+}
+
+function placeIdleDot(lat,lng,acc){
+  if(!S.map) return
+  if(S.userMarker){S.userMarker.setLatLng([lat,lng])}
+  else{
+    S.userMarker=L.marker([lat,lng],{
+      icon:L.divIcon({html:`<div style="width:14px;height:14px;border-radius:50%;background:#14B8A6;border:3px solid white;box-shadow:0 0 14px rgba(20,184,166,.8);opacity:.75"></div>`,className:'',iconSize:[14,14],iconAnchor:[7,7]}),
+      zIndexOffset:1000
+    }).addTo(S.map)
+  }
+  if(acc && acc<200){
+    if(S.accuracyCircle) S.map.removeLayer(S.accuracyCircle)
+    S.accuracyCircle=L.circle([lat,lng],{radius:acc,color:'#14B8A6',fillColor:'#14B8A6',fillOpacity:.05,weight:1,opacity:.3}).addTo(S.map)
+  }
+}
+
+function replotAllWaypoints(){
+  if(!S.map) return
+  S.wpMarkers.forEach(m=>S.map.removeLayer(m))
+  S.wpMarkers=[]
+  S.waypoints.forEach(wp=>{
+    const m=L.marker([wp.lat,wp.lng],{
+      icon:L.divIcon({
+        html:`<div style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer">
+          <div style="background:rgba(7,15,26,.92);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(8px)">${wp.name}</div>
+          <div style="font-size:22px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))">${catEmoji(wp.cat)}</div>
+          <div style="width:2px;height:8px;background:rgba(255,255,255,.5);border-radius:1px"></div>
+        </div>`,
+        className:'',iconSize:[90,60],iconAnchor:[45,60]
+      })
+    }).addTo(S.map)
+    m.bindPopup(`<div style="font-family:'DM Sans',sans-serif;min-width:150px;padding:2px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:5px">${catEmoji(wp.cat)} ${wp.name}</div>
+      <div style="font-size:11px;color:#64748B;margin-bottom:3px">📁 ${wp.cat}</div>
+      <div style="font-size:11px;color:#64748B;margin-bottom:3px">📍 ${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}</div>
+      <div style="font-size:11px;color:#64748B">🕐 ${wp.time}</div>
+      ${wp.notes?`<div style="font-size:11px;margin-top:5px;color:#94A3B8;border-top:1px solid #1e3048;padding-top:5px">${wp.notes}</div>`:''}
+    </div>`)
+    S.wpMarkers.push(m)
+  })
+}
+
+function toggleTracking(){S.isTracking?stopTracking():startTracking()}
+
+function startTracking(){
+  if(!navigator.geolocation){showToast('GPS not available on this device','error');return}
+  S.isTracking=true
+  S.trekStart=Date.now(); S.trekDist=0; S.trekElev=0; S.trekPath=[]
+  S.prevPos=null; S.prevAlt=null
+  document.getElementById('gps-track-btn').classList.add('tracking')
+  document.getElementById('track-btn-label').textContent='Stop Tracking'
+  document.getElementById('map-stats-bar').style.display='block'
+  document.getElementById('atc-status-label').textContent='Tracking Active 🟢'
+  document.getElementById('atc-title').textContent='Trek in progress...'
+  setGPS('searching','Acquiring GPS signal...')
+  S.watchId=navigator.geolocation.watchPosition(onGPS,e=>handleGPSError(e,'tracking'),{enableHighAccuracy:true,timeout:20000,maximumAge:5000})
+  S.trekTimerInt=setInterval(tickTimer,1000)
+  addTimelineEvent('🏃','Trek Started',new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),'GPS tracking activated — recording path')
+}
+
+function stopTracking(){
+  S.isTracking=false
+  if(S.watchId){navigator.geolocation.clearWatch(S.watchId);S.watchId=null}
+  clearInterval(S.trekTimerInt)
+  document.getElementById('gps-track-btn').classList.remove('tracking')
+  document.getElementById('track-btn-label').textContent='Start Tracking'
+  document.getElementById('map-stats-bar').style.display='none'
+  document.getElementById('atc-status-label').textContent='Ready to Trek'
+  document.getElementById('atc-title').textContent='Start a new adventure'
+  setGPS('off','GPS off — tap Start Tracking')
+  const dist=S.trekDist.toFixed(2)
+  const dur=Math.floor((Date.now()-S.trekStart)/60000)
+  addTimelineEvent('⏹️','Trek Stopped',new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),`Distance: ${dist}km · Duration: ${dur}min`)
+  // Save trek path to IndexedDB
+  if(S.trekPath.length>1){
+    DB.put('trek_paths',{id:Date.now(),path:S.trekPath,dist:dist,dur:dur,time:new Date().toISOString()}).catch(()=>{})
+  }
+  showToast(`Trek saved! ${dist}km in ${dur}min 🏔️`,'success')
+}
+
+function onGPS(pos){
+  const {latitude:lat,longitude:lng,altitude:alt,accuracy} = pos.coords
+  S.currentPos={lat,lng,alt}
+  if(S.prevPos) S.trekDist+=haversine(S.prevPos.lat,S.prevPos.lng,lat,lng)
+  S.prevPos={lat,lng}
+  if(alt!==null&&S.prevAlt!==null&&alt>S.prevAlt) S.trekElev+=(alt-S.prevAlt)
+  if(alt!==null) S.prevAlt=alt
+  S.trekPath.push([lat,lng])
+  refreshSOSGPS()
+  if(!S.map) return
+  // Bright pulsing marker
+  const icon=L.divIcon({
+    html:`<div style="position:relative;width:22px;height:22px">
+      <div style="position:absolute;inset:-8px;border-radius:50%;background:rgba(20,184,166,.18);animation:pulse 1.5s infinite"></div>
+      <div style="width:22px;height:22px;border-radius:50%;background:#14B8A6;border:3px solid white;box-shadow:0 0 20px rgba(20,184,166,.9)"></div>
+    </div>`,
+    className:'',iconSize:[22,22],iconAnchor:[11,11]
+  })
+  if(!S.userMarker) S.userMarker=L.marker([lat,lng],{icon,zIndexOffset:1000}).addTo(S.map)
+  else{S.userMarker.setLatLng([lat,lng]);S.userMarker.setIcon(icon)}
+  // Accuracy circle
+  if(S.accuracyCircle) S.map.removeLayer(S.accuracyCircle)
+  if(accuracy<150) S.accuracyCircle=L.circle([lat,lng],{radius:accuracy,color:'#14B8A6',fillColor:'#14B8A6',fillOpacity:.06,weight:1,opacity:.3}).addTo(S.map)
+  // Trek path polyline
+  if(S.pathLine) S.map.removeLayer(S.pathLine)
+  if(S.trekPath.length>1) S.pathLine=L.polyline(S.trekPath,{color:'#14B8A6',weight:4,opacity:.85,dashArray:null}).addTo(S.map)
+  S.map.panTo([lat,lng])
+  setGPS('active',`GPS Active · ±${Math.round(accuracy)}m`)
+  updateStats()
+  checkGeofence(lat,lng)
+}
+
+function onGPSError(e){ handleGPSError(e,'tracking') }
+
+// ── GEOFENCING (from architecture diagram) ──
+function checkGeofence(lat,lng){
+  const hazards=S.waypoints.filter(w=>w.cat==='Hazard')
+  let nearestAlert=null
+  let minDist=Infinity
+  hazards.forEach(h=>{
+    const d=haversine(lat,lng,h.lat,h.lng)*1000 // metres
+    if(d<150&&d<minDist){minDist=d;nearestAlert=h}
+  })
+  const alertEl=document.getElementById('geo-alert')
+  if(nearestAlert){
+    document.getElementById('geo-alert-text').textContent=`⚠️ Approaching Hazard: "${nearestAlert.name}" (${Math.round(minDist)}m away)`
+    alertEl.classList.add('show')
+    if(navigator.vibrate) navigator.vibrate([100,50,100])
+    if(S.geoAlertTimer) clearTimeout(S.geoAlertTimer)
+    S.geoAlertTimer=setTimeout(()=>alertEl.classList.remove('show'),5000)
+  }
+}
+
+// ── GPS PERMISSION HANDLING ──
+function handleGPSError(err, context){
+  const code = err?.code
+  if(code===1){
+    // PERMISSION_DENIED
+    setGPS('error','Location blocked')
+    showPermCard('denied')
+    if(context==='tracking') stopTracking()
+  } else if(code===2){
+    // POSITION_UNAVAILABLE
+    setGPS('error','GPS signal unavailable — try outdoors')
+    showToast('GPS signal weak — move to open area','warn')
+  } else if(code===3){
+    // TIMEOUT
+    setGPS('searching','GPS timeout — retrying...')
+    showToast('GPS taking longer than usual — please wait','info')
+  } else {
+    setGPS('off','GPS error — tap Start Tracking to retry')
+  }
+}
+
+function showPermCard(reason){
+  const card = document.getElementById('gps-perm-card')
+  const body = document.getElementById('gps-perm-body')
+  const steps = document.getElementById('gps-perm-steps')
+  const bar = document.getElementById('gps-bar-normal')
+  if(!card) return
+  // Detect browser & OS for specific instructions
+  const ua = navigator.userAgent
+  const isChrome = /Chrome/.test(ua) && !/Edg/.test(ua)
+  const isFirefox = /Firefox/.test(ua)
+  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua)
+  const isAndroid = /Android/.test(ua)
+  const isIOS = /iPhone|iPad|iPod/.test(ua)
+  const isFile = location.protocol === 'file:'
+  const isHTTP = location.protocol === 'http:' && location.hostname !== 'localhost'
+
+  if(reason==='not-supported'){
+    body.textContent = '⚠️ Your browser does not support GPS. Try Chrome or Safari on a mobile device.'
+    steps.innerHTML = ''
+  } else if(isFile){
+    body.innerHTML = '<b>⚠️ GPS requires a real server (http/https).</b><br>Opening as a file:// URL blocks location access.'
+    steps.innerHTML =
+      '<b>Fix Option 1 — Use VS Code Live Server:</b><br>' +
+      '1. Install "Live Server" extension in VS Code<br>' +
+      '2. Right-click the HTML file → "Open with Live Server"<br>' +
+      '3. It opens at http://127.0.0.1:5500 — GPS works! ✅<br><br>' +
+      '<b>Fix Option 2 — Python server:</b><br>' +
+      '<code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-size:.72rem">python -m http.server 8080</code><br>' +
+      'Then open http://localhost:8080'
+  } else if(isHTTP){
+    body.innerHTML = '<b>⚠️ GPS requires HTTPS.</b><br>Running on plain http:// blocks location in modern browsers.'
+    steps.innerHTML =
+      '<b>Fix:</b> Deploy to any HTTPS host:<br>' +
+      '• <b>Netlify:</b> drag & drop your HTML file<br>' +
+      '• <b>GitHub Pages:</b> free HTTPS hosting<br>' +
+      '• <b>Vercel:</b> instant deploy<br>' +
+      'Or use http://localhost (localhost is exempt)'
+  } else if(isAndroid && isChrome){
+    body.textContent = 'Location permission was blocked. Enable it in Chrome Android:'
+    steps.innerHTML =
+      '<b>In Chrome Android:</b><br>' +
+      '1. Tap the 🔒 lock icon in address bar<br>' +
+      '2. Tap <b>Permissions</b> → <b>Location</b><br>' +
+      '3. Select <b>Allow</b><br>' +
+      '4. Reload the page'
+  } else if(isIOS && isSafari){
+    body.textContent = 'Location permission is blocked. Enable it in iOS Settings:'
+    steps.innerHTML =
+      '<b>In iOS Settings:</b><br>' +
+      '1. Open <b>Settings</b> app<br>' +
+      '2. Go to <b>Safari</b> → <b>Location</b><br>' +
+      '3. Set to <b>Ask</b> or <b>Allow</b><br>' +
+      '4. Come back and reload this page<br><br>' +
+      '<b>Or in the page:</b><br>' +
+      'Tap <b>AA</b> in address bar → <b>Website Settings</b> → <b>Location: Allow</b>'
+  } else if(isChrome){
+    body.textContent = 'Location permission is blocked. Fix in Chrome desktop:'
+    steps.innerHTML =
+      '<b>Chrome Desktop:</b><br>' +
+      '1. Click the 🔒 lock icon in the address bar<br>' +
+      '2. Click <b>Location</b> → change to <b>Allow</b><br>' +
+      '3. Reload the page ✅<br><br>' +
+      '<b>Or go to:</b> Settings → Privacy → Site Settings → Location'
+  } else if(isFirefox){
+    body.textContent = 'Location permission was denied in Firefox:'
+    steps.innerHTML =
+      '<b>Firefox:</b><br>' +
+      '1. Click the 🛡️ shield icon in address bar<br>' +
+      '2. Click <b>Permissions</b> → <b>Access Your Location</b><br>' +
+      '3. Remove the block, then reload'
+  } else {
+    body.textContent = 'Location access was denied. Please allow location permission in your browser settings and reload.'
+    steps.innerHTML = ''
+  }
+  card.style.display = 'block'
+  if(bar) bar.style.display = 'none'
+}
+
+function hidePermCard(){
+  const card = document.getElementById('gps-perm-card')
+  const bar = document.getElementById('gps-bar-normal')
+  if(card) card.style.display = 'none'
+  if(bar) bar.style.display = 'flex'
+}
+
+function retryGPS(){
+  hidePermCard()
+  setGPS('searching','Retrying GPS...')
+  if(S.map) locateUser()
+  else startPassiveGPS()
+}
+
+function haversine(la1,lo1,la2,lo2){
+  const R=6371,d2r=Math.PI/180,dLat=(la2-la1)*d2r,dLon=(lo2-lo1)*d2r
+  const a=Math.sin(dLat/2)**2+Math.cos(la1*d2r)*Math.cos(la2*d2r)*Math.sin(dLon/2)**2
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
+}
+
+function tickTimer(){
+  const s=Math.floor((Date.now()-S.trekStart)/1000)
+  const mm=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0')
+  document.getElementById('ms-time').textContent=mm+':'+ss
+  document.getElementById('home-time').textContent=mm+':'+ss
+}
+
+function updateStats(){
+  const d=S.trekDist.toFixed(2),e=Math.round(S.trekElev)
+  document.getElementById('ms-dist').textContent=d
+  document.getElementById('ms-elev').textContent=e
+  document.getElementById('home-dist').textContent=d
+  document.getElementById('home-elev').textContent=e
+  if(S.trekDist>0.05){
+    const mins=(Date.now()-S.trekStart)/60000
+    const pace=(mins/S.trekDist).toFixed(1)
+    document.getElementById('ms-pace').textContent=pace
+    document.getElementById('home-pace').textContent=pace
+  }
+}
+
+function setGPS(state,text){
+  const dot=document.getElementById('gps-dot')
+  if(dot) dot.className='gps-indicator '+state
+  const t=document.getElementById('gps-text')
+  if(t) t.textContent=text
+}
+
+// ── OFFLINE TILE DOWNLOAD ──
+// downloadTiles() defined in OFFLINE TILE CACHE section below
+
+// ═══════════════════════════════════════════════════════════
+// WAYPOINTS — IndexedDB offline + Live map pins
+// ═══════════════════════════════════════════════════════════
+function openWPSheet(){
+  // Update GPS badge in sheet
+  const badge=document.getElementById('wp-gps-badge')
+  if(S.currentPos) badge.textContent=`📍 GPS: ${S.currentPos.lat.toFixed(4)}, ${S.currentPos.lng.toFixed(4)}`
+  else badge.textContent='📡 GPS location will be used if available'
+  document.getElementById('wp-backdrop').classList.add('open')
+}
+function closeWPSheet(){document.getElementById('wp-backdrop').classList.remove('open')}
+function selectCat(el,cat){
+  S.selectedCat=cat
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('sel'))
+  el.classList.add('sel')
+}
+
+async function saveWP(){
+  const name=document.getElementById('wp-name-input').value.trim()
+  if(!name){showToast('Enter a waypoint name','error');return}
+  const lat=S.currentPos?.lat||(S.map?S.map.getCenter().lat:18.5204)
+  const lng=S.currentPos?.lng||(S.map?S.map.getCenter().lng:73.8567)
+  const wp={
+    id:Date.now(), name, cat:S.selectedCat,
+    notes:document.getElementById('wp-notes-input').value.trim(),
+    lat,lng, time:new Date().toLocaleString(),
+  }
+  // Save to IndexedDB (offline storage)
+  await DB.put('waypoints',wp).catch(()=>lsSet('waypoints',[wp,...S.waypoints]))
+  S.waypoints.unshift(wp)
+  lsSet('waypoints',S.waypoints)
+  renderWaypoints()
+  replotAllWaypoints() // Instantly show on map
+  if(S.map) S.map.setView([lat,lng],Math.max(S.map.getZoom(),15))
+  addTimelineEvent(catEmoji(wp.cat),'Waypoint: '+wp.name,new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),wp.notes||`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+  closeWPSheet()
+  document.getElementById('wp-name-input').value=''
+  document.getElementById('wp-notes-input').value=''
+  showToast(`📍 ${wp.name} pinned on map!`,'success')
+}
+
+const CAT_COLORS={Camp:'rgba(13,148,136,.22)',Summit:'rgba(139,92,246,.22)',Water:'rgba(59,130,246,.22)',Hazard:'rgba(239,68,68,.22)',Scenic:'rgba(245,158,11,.22)'}
+const CAT_BADGE={Camp:'rgba(13,148,136,.8)',Summit:'rgba(139,92,246,.8)',Water:'rgba(59,130,246,.8)',Hazard:'rgba(239,68,68,.8)',Scenic:'rgba(245,158,11,.8)'}
+function catEmoji(c){return{Camp:'⛺',Summit:'🏔️',Water:'💧',Hazard:'⚠️',Scenic:'📸'}[c]||'📍'}
+
+function filterWP(el,cat){
+  S.wpFilter=cat
+  document.querySelectorAll('.wp-filter-chip').forEach(c=>c.classList.remove('active'))
+  el.classList.add('active')
+  renderWaypoints()
+}
+
+function renderWaypoints(){
+  const grid=document.getElementById('wp-grid')
+  const filtered=S.wpFilter==='All'?S.waypoints:S.waypoints.filter(w=>w.cat===S.wpFilter)
+  document.getElementById('wp-count-label').textContent=S.waypoints.length+' saved locations'
+  if(!filtered.length){
+    grid.innerHTML=`<div class="wp-empty-state"><div class="wp-empty-emoji">📍</div><div class="wp-empty-msg">No ${S.wpFilter==='All'?'waypoints':S.wpFilter+' waypoints'} yet.<br/>Tap "+ Add" to mark your first location.</div></div>`
+    return
+  }
+  grid.innerHTML=filtered.map(w=>`
+    <div class="wp-card" onclick="focusWaypoint(${w.lat},${w.lng},'${w.name}')">
+      <div class="wp-thumb" style="background:${CAT_COLORS[w.cat]||'var(--bg3)'}">
+        ${catEmoji(w.cat)}
+        <span class="wp-cat-tag" style="background:${CAT_BADGE[w.cat]||'var(--border2)'};color:#fff">${w.cat}</span>
+      </div>
+      <div class="wp-card-info">
+        <div class="wp-card-name">${w.name}</div>
+        <div class="wp-card-sub">${w.time.split(',')[0]}</div>
+      </div>
+    </div>
+  `).join('')
+}
+
+function focusWaypoint(lat,lng,name){
+  switchTab('map')
+  setTimeout(()=>{
+    if(S.map){S.map.setView([lat,lng],16);showToast('📍 '+name,'info')}
+  },300)
+}
+
+// ═══════════════════════════════════════════════════════════
+// TIMELINE
+// ═══════════════════════════════════════════════════════════
+function addTimelineEvent(emoji,title,time,note=''){
+  const section=document.getElementById('timeline-section')
+  const div=document.createElement('div')
+  div.className='tl-item'
+  div.style.animation='fadeUp .3s ease'
+  div.innerHTML=`
+    <div class="tl-dot" style="background:rgba(13,148,136,.18);border-color:var(--teal)">${emoji}</div>
+    <div class="tl-body">
+      <div class="tl-title">${title}</div>
+      <div class="tl-time">${time}</div>
+      ${note?`<div class="tl-note">${note}</div>`:''}
+    </div>`
+  section.appendChild(div)
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHAT — Online(Cloud AI) + Offline(RAG) per workflow diagram
+// ═══════════════════════════════════════════════════════════
+const KB={
+  'altitude sickness':'🏔️ <b>AMS (Altitude Mountain Sickness):</b><br>Symptoms: headache, nausea, dizziness, fatigue, loss of appetite.<br><b>Treatment:</b> Descend 300–500m immediately. REST. Drink water. Diamox (125–250mg) if prescribed. <b>NEVER ascend with symptoms.</b><br>Prevention: gain max 300m/day above 3000m. Rest day every 3rd day.',
+  'first aid':'🩹 <b>Trekking First Aid:</b><br>Blisters → drain with sterilized needle, keep skin intact, moleskin pad.<br>Sprains → RICE (Rest, Ice, Compress, Elevate).<br>Cuts → clean, antiseptic, pressure bandage.<br>Hypothermia → dry clothes, warm core, warm fluids, NO alcohol.',
+  'weather':'🌦️ <b>Mountain Weather Signs:</b><br>Lenticular clouds over peak = strong winds.<br>Rapidly building cumulus = thunderstorm in 2–4hrs.<br>Red morning sky = rain coming.<br>Start treks before 7am in Sahyadri. Descend before afternoon storms.',
+  'navigation':'🧭 <b>Offline Navigation:</b><br>Use topo map + compass. Triangulate from 3 landmarks.<br>Follow ridgelines in fog. Sun rises East, sets West.<br>Sahyadri rivers flow West to Arabian Sea. Mark trailhead as waypoint before trekking.',
+  'water':'💧 <b>Water Safety:</b><br>Running > stagnant water. Always purify: boil 1 min, iodine tabs, or Sawyer filter.<br>Unsafe signs: discolouration, bad smell, dead animals nearby.<br>Drink 3–4L/day. Rehydration salts for cramps.',
+  'gear':'🎒 <b>Essential Trek Gear:</b><br>Broken-in boots, 3 layers (base/insulate/waterproof), headlamp+spare batteries, 3L water capacity, high-cal food, first aid kit, emergency whistle, rain cover, emergency blanket, power bank. Pack < 20% body weight.',
+  'snake':'🐍 <b>Snake Bite Emergency:</b><br>Stay calm. Immobilize bitten area at heart level. Remove jewelry near bite. <b>DO NOT</b> suck venom, cut wound, or tourniquet. Note snake appearance. Rush to hospital — antivenom available in all district hospitals.',
+  'hypothermia':'🥶 <b>Hypothermia:</b><br>Mild (shivering, slurred speech) → dry clothes, windbreak, warm drinks.<br>Severe (no shivering, unconscious) → warm core slowly, do NOT rub limbs, lay horizontal.<br>Prevention: stay dry, wool/synthetic layers, high-calorie food.',
+  'sos signals':'🆘 <b>Emergency Signals:</b><br>3 whistle blasts = international distress signal.<br>Mirror flash in sunlight. HELP/SOS in rocks visible from air.<br>India emergency: 112. Forest helpline: 1926. Stay in open area for aerial rescue.',
+  'monsoon':'☔ <b>Sahyadri Monsoon:</b><br>Full waterproofing essential. Leech protection: gaiters + salt.<br>Flash flood risk — never cross flooded rivers. Start by 5am, descend before noon. Avoid ridgelines during thunder. Trekking poles mandatory on slippery rock.',
+  'blisters':'🩹 <b>Blister Prevention & Treatment:</b><br>Prevention: moisture-wicking socks, broken-in boots, moleskin on hotspots proactively.<br>Treatment: sterilize needle, drain at base, keep skin roof intact, antiseptic, moleskin donut pad.',
+  'river crossing':'🌊 <b>River Crossing Safety:</b><br>Never cross above knee in current. Unbuckle pack before crossing. Use trekking pole upstream for stability. Cross at widest shallowest point. Avoid after rain. If swept away → float on back feet-first downstream.',
+  'bear':'🐻 <b>Bear Encounter (Sloth Bear):</b><br>Make noise while trekking. If seen → back away slowly, avoid eye contact, NO running. If charged → stand ground (often mock charge). Protect head and neck if attacked. Carry pepper spray.',
+}
+
+function findKBAnswer(q){
+  const ql=q.toLowerCase()
+  for(const[key,ans] of Object.entries(KB)){
+    if(ql.includes(key)||key.split(' ').some(w=>w.length>3&&ql.includes(w))) return {ans, source:'Local Knowledge Base'}
+  }
+  if(/hello|hi|namaste|hey/.test(ql)) return {ans:'Namaste! 🙏 I\'m TrekBot. Ask me about altitude sickness, first aid, navigation, weather, gear, snake bites, hypothermia, SOS signals, river crossing, or monsoon trekking!', source:'TrekBot'}
+  if(/thank/.test(ql)) return {ans:'You\'re welcome! Stay safe on the trails 🏔️ The mountain will always be there — your safety matters most!', source:'TrekBot'}
+  return {ans:`I can help with: altitude sickness, first aid, weather signs, navigation, water safety, gear, snake bites, hypothermia, SOS signals, monsoon trekking, river crossing, bear encounters. ${S.isOnline?'🟢 Online mode: enhanced AI active.':'🟡 Offline mode: local knowledge base.'}`, source:'TrekBot'}
+}
+
+function appendMsg(role,text,source=''){
+  const msgs=document.getElementById('chat-msgs')
+  const time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+  const div=document.createElement('div')
+  div.className='msg '+role
+  div.innerHTML=`<div class="msg-bubble">${text}${source&&role==='bot'?`<br><span class="source-badge">📚 ${source}</span>`:''}</div><div class="msg-time">${time}</div>`
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight
+}
+
+function appendSystem(text){
+  const msgs=document.getElementById('chat-msgs')
+  const div=document.createElement('div')
+  div.className='msg system'
+  div.innerHTML=`<div class="msg-bubble">${text}</div>`
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight
+}
+
+function showTyping(){
+  const msgs=document.getElementById('chat-msgs')
+  const div=document.createElement('div')
+  div.className='msg bot'
+  div.id='typing-ind'
+  div.innerHTML=`<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight
+}
+
+function sendChat(){
+  const inp=document.getElementById('chat-input')
+  const q=inp.value.trim()
+  if(!q) return
+  inp.value=''
+  appendMsg('user',q)
+  showTyping()
+  const delay=600+Math.random()*600
+  setTimeout(()=>{
+    document.getElementById('typing-ind')?.remove()
+    // Workflow: Internet available → Online Mode (Cloud AI) : Offline Mode (RAG)
+    if(S.isOnline) callCloudAI(q)
+    else{
+      const{ans,source}=findKBAnswer(q)
+      appendMsg('bot',ans,source)
+    }
+  },delay)
+}
+
+function quickAsk(q){document.getElementById('chat-input').value=q;sendChat()}
+
+async function callCloudAI(q){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:400,
+        system:'You are TrekBot, an expert AI trekking assistant for India (especially Sahyadri/Western Ghats). Give concise, practical, safety-focused answers. Max 4 sentences. Use emojis sparingly for readability.',
+        messages:[{role:'user',content:q}]
+      })
+    })
+    const d=await r.json()
+    const text=d.content?.[0]?.text
+    if(text) appendMsg('bot',text,'Claude AI (Online)')
+    else throw new Error('no response')
+  }catch{
+    // Fallback to offline RAG
+    const{ans,source}=findKBAnswer(q)
+    appendMsg('bot',ans,source+' (offline fallback)')
+  }
+}
+
+function clearChat(){
+  document.getElementById('chat-msgs').innerHTML=`<div class="msg bot"><div class="msg-bubble">Chat cleared! Ask me anything about trekking 🏔️</div><div class="msg-time">Now</div></div>`
+  showToast('Chat cleared','info')
+}
+
+function updateBotStatus(){
+  const dot=document.getElementById('bot-dot'),label=document.getElementById('bot-status-label')
+  if(!dot) return
+  if(S.isOnline){dot.className='status-dot online';label.textContent='Online · Cloud AI (Claude)'}
+  else{dot.className='status-dot offline';label.textContent='Offline · Local RAG Knowledge'}
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONNECTIVITY — per workflow diagram
+// ═══════════════════════════════════════════════════════════
+function updateConnectivity(){
+  S.isOnline=navigator.onLine
+  const badge=document.getElementById('conn-badge')
+  const text=document.getElementById('conn-text')
+  if(badge&&text){
+    if(S.isOnline){badge.className='conn-badge online';text.textContent='Online'}
+    else{badge.className='conn-badge offline';text.textContent='Offline'}
+  }
+  updateBotStatus()
+}
+window.addEventListener('online',()=>{
+  S.isOnline=true; updateConnectivity()
+  appendSystem('🟢 Connected — Cloud AI active')
+  showToast('Back online! Cloud AI active','success')
+})
+window.addEventListener('offline',()=>{
+  S.isOnline=false; updateConnectivity()
+  appendSystem('🟡 Offline — switching to Local RAG')
+  showToast('Offline — Local AI active','warn')
+})
+
+// ═══════════════════════════════════════════════════════════
+// SOS — FIXED: collect location DURING hold, fire SYNC on trigger
+// Root cause of all previous failures:
+// Any async/await or setTimeout between user gesture and
+// location.href = sms: breaks the gesture trust chain.
+// Solution: start fetching GPS the moment user starts holding,
+// so by the time 3s completes, coords are ready → fire SMS instantly.
+// ═══════════════════════════════════════════════════════════
+
+function startSOS(e){
+  e?.preventDefault()
+  if(S.sosHoldInt) return
+  S.sosProgress = 0
+
+  // ── Start collecting location immediately while user holds ──
+  // By the time 3s countdown finishes, we'll have coords ready
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        S.currentPos = {lat:pos.coords.latitude, lng:pos.coords.longitude,
+          alt:pos.coords.altitude, source:'gps'}
+        lsSet('last_pos', S.currentPos)
+        refreshSOSGPS()
+      },
+      ()=>{
+        // GPS failed — use saved last position
+        const saved = lsGet('last_pos')
+        if(saved && saved.lat) S.currentPos = saved
+      },
+      {enableHighAccuracy:true, timeout:3000, maximumAge:30000}
+    )
+  }
+
+  const circle = document.getElementById('sos-svg-circle')
+  const hint   = document.getElementById('sos-hold-hint')
+
+  S.sosHoldInt = setInterval(()=>{
+    S.sosProgress += 100/30
+    circle.style.strokeDashoffset = 415 - (415 * S.sosProgress/100)
+    const rem = Math.ceil(3 - S.sosProgress*3/100)
+    hint.textContent = rem > 0 ? `Hold ${rem}s` : 'Sending...'
+    if(S.sosProgress >= 100){
+      clearInterval(S.sosHoldInt)
+      S.sosHoldInt = null
+      triggerSOS()  // ← called synchronously from setInterval (gesture still valid)
+    }
+  }, 100)
+}
+
+function cancelSOS(){
+  if(S.sosHoldInt){ clearInterval(S.sosHoldInt); S.sosHoldInt = null }
+  S.sosProgress = 0
+  document.getElementById('sos-svg-circle').style.strokeDashoffset = 415
+  document.getElementById('sos-hold-hint').textContent = 'Hold 3s'
+}
+
+// triggerSOS is now fully SYNCHRONOUS — no async, no await, no setTimeout before SMS
+function triggerSOS(){
+  const overlay = document.getElementById('sos-overlay')
+  const now = new Date()
+  document.getElementById('ov-time').textContent  = now.toLocaleString()
+  document.getElementById('ov-mode').textContent  = S.isOnline ? 'Online (SMS + WhatsApp)' : 'Offline (SMS)'
+  overlay.classList.add('show')
+  if(navigator.vibrate) navigator.vibrate([300,100,300,100,600])
+
+  // ── Build message content ──
+  const pos = S.currentPos || lsGet('last_pos')
+  const hasCoords = pos && pos.lat
+  const coords    = hasCoords ? `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}` : 'Unknown'
+  const mapsLink  = hasCoords ? `https://maps.google.com/?q=${pos.lat},${pos.lng}` : ''
+  const locSource = pos?.source === 'gps' ? 'GPS' : pos?.source === 'manual' ? 'Manual' : 'Approx'
+
+  document.getElementById('ov-coords').textContent = hasCoords ? `${coords} (${locSource})` : 'Not available'
+
+  const smsMsg =
+    `🆘 EMERGENCY SOS!\n` +
+    `Name: ${S.user?.name || 'TrekMate User'}\n` +
+    `Blood Type: ${S.user?.blood || 'Unknown'}\n` +
+    (hasCoords ? `Location: ${mapsLink}\nCoords: ${coords}\n` : `Location: Not available\n`) +
+    `Time: ${now.toLocaleString()}\n` +
+    `Emergency: 112`
+
+  const waMsg =
+    `🆘 *EMERGENCY SOS!*\n` +
+    `*${S.user?.name || 'TrekMate User'}* needs immediate help!\n\n` +
+    `🩸 Blood: ${S.user?.blood || 'Unknown'}\n` +
+    (hasCoords ? `📍 Location: ${mapsLink}\nCoords: \`${coords}\`\n` : `📍 Location: Not available\n`) +
+    `⏰ ${now.toLocaleString()}\n\n` +
+    `*Call 112 immediately*\n_Sent via TrekMate_`
+
+  const statusEl = document.getElementById('ov-status')
+
+  // ── NO CONTACTS: show SMS button ──
+  if(!S.contacts || S.contacts.length === 0){
+    const card = document.querySelector('.sos-ov-card')
+    document.getElementById('sos-send-zone') && (document.getElementById('sos-send-zone').innerHTML='')
+    if(card){
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      const sep = isIOS ? '&' : '?'
+      const wrap = document.createElement('div')
+      wrap.id = 'sos-wa-btns'
+      wrap.style.marginTop = '.75rem'
+      const lbl = document.createElement('div')
+      lbl.style.cssText = 'font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:.4rem'
+      lbl.textContent = 'No contacts saved — tap to open SMS:'
+      wrap.appendChild(lbl)
+      const a = document.createElement('a')
+      a.href = 'sms:' + sep + 'body=' + encodeURIComponent(smsMsg)
+      a.style.cssText = 'display:block;padding:.65rem;background:rgba(34,197,94,.2);border:1.5px solid rgba(34,197,94,.5);border-radius:12px;color:#fff;text-decoration:none;font-size:.88rem;text-align:center;font-weight:700'
+      a.textContent = '📱 Open SMS App'
+      wrap.appendChild(a)
+      card.appendChild(wrap)
+    }
+    statusEl.textContent = '⚠️ No contacts — tap button above. Add contacts in SOS tab!'
+    showToast('Add emergency contacts!', 'error')
+    logSOSEvent(now, coords, mapsLink, 'No contacts')
+    return
+  }
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const zone  = document.getElementById('sos-send-zone')
+  if(zone) zone.innerHTML = ''
+
+  // ── STEP 1: Try Fast2SMS API (real SMS delivery, online only) ──
+  const apiKey = lsGet('fast2sms_key','')
+  if(S.isOnline && apiKey && apiKey.length > 10){
+    statusEl.textContent = '📡 Sending SMS via Fast2SMS...'
+    const phones = S.contacts.map(c=>c.phone.replace(/[\s\-\(\)\+]/g,'')).join(',')
+    // Fast2SMS DLT-route (use 'q' for quick transactional)
+    const f2sUrl = 'https://www.fast2sms.com/dev/bulkV2?authorization=' + apiKey +
+      '&route=q&numbers=' + phones +
+      '&message=' + encodeURIComponent(smsMsg.replace(/[🆘🩸📍⏰]/g,'')) +
+      '&flash=0'
+    fetch(f2sUrl, {method:'GET'})
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.return){
+          statusEl.textContent = '✅ SMS delivered to ' + S.contacts.length + ' contact(s) via Fast2SMS!'
+          showToast('✅ Emergency SMS sent!','success')
+        } else {
+          statusEl.textContent = '⚠️ Fast2SMS failed: ' + (d.message||'check API key') + ' — use buttons below'
+          buildManualButtons(zone, smsMsg, waMsg, isIOS, statusEl)
+        }
+      })
+      .catch(()=>{
+        statusEl.textContent = '⚠️ API failed — use buttons below'
+        buildManualButtons(zone, smsMsg, waMsg, isIOS, statusEl)
+      })
+  } else {
+    // No API key or offline — show tap buttons
+    buildManualButtons(zone, smsMsg, waMsg, isIOS, statusEl)
+  }
+
+  // Log event
+  logSOSEvent(now, coords, mapsLink, S.contacts.map(c=>c.name).join(', '))
+}
+
+// Build manual SMS + WhatsApp tap buttons
+function buildManualButtons(zone, smsMsg, waMsg, isIOS, statusEl){
+  if(!zone) return
+
+  // ── Detect if sms: links work (mobile only) ──
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+
+  // ── COPY MESSAGE BUTTON — works on ALL devices including desktop ──
+  const copyLbl = document.createElement('div')
+  copyLbl.style.cssText = 'font-size:.75rem;color:rgba(255,255,255,.95);font-weight:700;margin-bottom:.4rem;letter-spacing:.03em'
+  copyLbl.textContent = '📋 COPY SOS MESSAGE (works everywhere):'
+  zone.appendChild(copyLbl)
+
+  const copyBtn = document.createElement('button')
+  copyBtn.style.cssText =
+    'display:block;width:100%;margin:0 0 .5rem;padding:.8rem 1rem;' +
+    'background:#1d4ed8;border:2px solid #3b82f6;' +
+    'border-radius:14px;color:#fff;cursor:pointer;' +
+    'font-size:.95rem;font-family:sans-serif;' +
+    'text-align:center;font-weight:700;' +
+    'box-shadow:0 4px 16px rgba(0,0,0,.5)'
+  copyBtn.textContent = '📋 Copy SOS Message to Clipboard'
+  copyBtn.onclick = ()=>{
+    navigator.clipboard.writeText(smsMsg).then(()=>{
+      copyBtn.style.background = '#15803d'
+      copyBtn.textContent = '✅ Copied! Paste it into SMS or any app'
+      if(statusEl) statusEl.textContent = '✅ Message copied — paste into SMS/WhatsApp'
+    }).catch(()=>{
+      // Fallback for older browsers
+      const ta = document.createElement('textarea')
+      ta.value = smsMsg
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:.01'
+      document.body.appendChild(ta)
+      ta.focus(); ta.select()
+      document.execCommand('copy')
+      ta.remove()
+      copyBtn.style.background = '#15803d'
+      copyBtn.textContent = '✅ Copied! Paste into SMS or any app'
+    })
+  }
+  zone.appendChild(copyBtn)
+
+  // ── SMS BUTTONS — work on mobile (Android + iOS) ──
+  if(isMobile){
+    const smsLbl = document.createElement('div')
+    smsLbl.style.cssText = 'font-size:.75rem;color:rgba(255,255,255,.95);font-weight:700;margin:.5rem 0 .4rem;letter-spacing:.03em'
+    smsLbl.textContent = '📱 TAP TO SEND SMS (mobile — works offline):'
+    zone.appendChild(smsLbl)
+
+    S.contacts.forEach(c=>{
+      const phone = c.phone.replace(/[\s\-\(\)]/g,'')
+      const sep   = isIOS ? '&' : '?'
+      const a = document.createElement('a')
+      a.href = 'sms:' + phone + sep + 'body=' + encodeURIComponent(smsMsg)
+      a.style.cssText =
+        'display:block;margin:0 0 .5rem;padding:.8rem 1rem;' +
+        'background:#16a34a;border:2px solid #22c55e;' +
+        'border-radius:14px;color:#fff;text-decoration:none;' +
+        'font-size:.95rem;font-family:sans-serif;' +
+        'text-align:center;font-weight:700;cursor:pointer;' +
+        '-webkit-tap-highlight-color:rgba(255,255,255,.4);' +
+        'box-shadow:0 4px 16px rgba(0,0,0,.5)'
+      a.textContent = '📱 SMS → ' + c.name + ' (' + phone + ')'
+      a.addEventListener('click', ()=>{
+        a.style.background = '#15803d'
+        a.textContent = '✅ SMS opened — tap Send in SMS app'
+      })
+      zone.appendChild(a)
+    })
+  } else {
+    // Desktop — show "Open SMS on phone" instruction
+    const desktopNote = document.createElement('div')
+    desktopNote.style.cssText =
+      'background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);' +
+      'border-radius:12px;padding:.75rem 1rem;margin:0 0 .5rem;' +
+      'font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.6'
+    desktopNote.textContent =
+      '💡 On Desktop: Copy the message above → open your phone\'s SMS app → paste and send to your emergency contacts.'
+    zone.appendChild(desktopNote)
+  }
+
+  // ── CALL BUTTONS — tel: works on mobile AND desktop (Skype/FaceTime) ──
+  const callLbl = document.createElement('div')
+  callLbl.style.cssText = 'font-size:.75rem;color:rgba(255,255,255,.95);font-weight:700;margin:.5rem 0 .4rem'
+  callLbl.textContent = '📞 CALL DIRECTLY:'
+  zone.appendChild(callLbl)
+
+  S.contacts.forEach(c=>{
+    const phone = c.phone.replace(/[\s\-\(\)]/g,'')
+    const a = document.createElement('a')
+    a.href = 'tel:' + phone
+    a.style.cssText =
+      'display:block;margin:0 0 .5rem;padding:.8rem 1rem;' +
+      'background:#b45309;border:2px solid #f59e0b;' +
+      'border-radius:14px;color:#fff;text-decoration:none;' +
+      'font-size:.95rem;font-family:sans-serif;' +
+      'text-align:center;font-weight:700;cursor:pointer;' +
+      '-webkit-tap-highlight-color:rgba(255,165,0,.4);' +
+      'box-shadow:0 4px 16px rgba(0,0,0,.5)'
+    a.textContent = '📞 Call ' + c.name + ' (' + phone + ')'
+    a.addEventListener('click', ()=>{
+      a.style.background = '#92400e'
+      a.textContent = '✅ Calling ' + c.name + '...'
+    })
+    zone.appendChild(a)
+  })
+
+  // ── WHATSAPP BUTTONS — online only ──
+  if(S.isOnline){
+    const waLbl = document.createElement('div')
+    waLbl.style.cssText = 'font-size:.75rem;color:rgba(255,255,255,.95);font-weight:700;margin:.5rem 0 .4rem'
+    waLbl.textContent = '💬 TAP TO SEND WHATSAPP (online):'
+    zone.appendChild(waLbl)
+
+    S.contacts.forEach(c=>{
+      const phone = c.phone.replace(/[\s\-\(\)]/g,'').replace('+','')
+      const a = document.createElement('a')
+      a.href   = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(waMsg)
+      a.target = '_blank'
+      a.rel    = 'noopener'
+      a.style.cssText =
+        'display:block;margin:0 0 .5rem;padding:.8rem 1rem;' +
+        'background:#128c3e;border:2px solid #25d366;' +
+        'border-radius:14px;color:#fff;text-decoration:none;' +
+        'font-size:.95rem;font-family:sans-serif;' +
+        'text-align:center;font-weight:700;cursor:pointer;' +
+        '-webkit-tap-highlight-color:rgba(255,255,255,.4);' +
+        'box-shadow:0 4px 16px rgba(0,0,0,.5)'
+      a.textContent = '💬 WhatsApp → ' + c.name
+      a.addEventListener('click', ()=>{
+        a.style.background = '#0f6e30'
+        a.textContent = '✅ WhatsApp opened for ' + c.name
+      })
+      zone.appendChild(a)
+    })
+  }
+
+  if(statusEl) statusEl.textContent = '⬇️ Tap each button to send alert'
+}
+
+// ── Fast2SMS API Key management ──
+function saveFast2SMSKey(){
+  const key = document.getElementById('fast2sms-key')?.value.trim()
+  if(!key){ showToast('Enter your Fast2SMS API key','error'); return }
+  lsSet('fast2sms_key', key)
+  const st = document.getElementById('fast2sms-status')
+  if(st) st.textContent = '✅ Key saved! SOS will auto-send SMS when online.'
+  if(st) st.style.color = '#4ADE80'
+  showToast('Fast2SMS key saved!','success')
+}
+
+function loadFast2SMSKey(){
+  const key = lsGet('fast2sms_key','')
+  const el  = document.getElementById('fast2sms-key')
+  const st  = document.getElementById('fast2sms-status')
+  if(el && key) el.value = key
+  if(st && key){ st.textContent = '✅ API key saved — auto SMS active'; st.style.color='#4ADE80' }
+}
+
+function logSOSEvent(now, coords, mapsLink, sentTo){
+  const event = {
+    id: Date.now(),
+    time: now.toISOString(),
+    coords,
+    mapsLink,
+    sentTo,
+    mode: S.isOnline ? 'online' : 'offline'
+  }
+  DB.put('sos_history', event).catch(()=>{})
+  S.sosHistory.unshift(event)
+  renderSOSHistory()
+  addTimelineEvent('🆘','SOS Triggered',
+    now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    `Sent to: ${sentTo}`)
+}
+
+function dismissSOS(){
+  document.getElementById('sos-overlay').classList.remove('show')
+  // Remove WA buttons
+  document.getElementById('sos-send-zone') && (document.getElementById('sos-send-zone').innerHTML='')
+  cancelSOS()
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTACTS
+// ═══════════════════════════════════════════════════════════
+function addContact(){
+  const name=prompt('Contact name (e.g. Mom, Dad, Friend):')
+  if(!name?.trim()) return
+  const phone=prompt('Phone with country code (e.g. +919876543210):\nSMS + WhatsApp will both be sent to this number.')
+  if(!phone?.trim()) return
+  const cleaned=phone.trim().replace(/[\s\-\(\)]/g,'')
+  if(cleaned.length<8){showToast('Enter a valid phone number','error');return}
+  S.contacts.push({id:Date.now(),name:name.trim(),phone:cleaned})
+  lsSet('contacts',S.contacts)
+  renderContacts()
+  showToast('✅ '+name.trim()+' added as emergency contact','success')
+}
+
+function deleteContact(id){
+  if(!confirm('Remove this emergency contact?')) return
+  S.contacts=S.contacts.filter(c=>c.id!==id)
+  lsSet('contacts',S.contacts)
+  renderContacts()
+}
+
+function renderContacts(){
+  const list=document.getElementById('contacts-list')
+  if(!list) return
+  if(!S.contacts.length){
+    list.innerHTML=`<div style="font-size:.8rem;color:var(--text3);padding:.5rem 0 .75rem;line-height:1.7">No emergency contacts yet.<br/>Add contacts — SOS sends <b style="color:var(--text2)">SMS</b> (offline) + <b style="color:#4ADE80">WhatsApp</b> (online) to all.</div>`
+    return
+  }
+  list.innerHTML=S.contacts.map(c=>`
+    <div class="contact-card">
+      <div class="contact-avatar">${c.name[0].toUpperCase()}</div>
+      <div class="contact-details">
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-phone">${c.phone} · <span style="color:var(--teal3);font-size:.66rem">SMS + WhatsApp</span></div>
+      </div>
+      <button class="contact-del-btn" onclick="deleteContact(${c.id})">🗑️</button>
+    </div>`).join('')
+}
+
+function renderSOSHistory(){
+  const el=document.getElementById('sos-history-list')
+  if(!el) return
+  if(!S.sosHistory.length){el.innerHTML=`<div style="font-size:.78rem;color:var(--text3);padding:.5rem 0">No SOS events recorded.</div>`;return}
+  el.innerHTML=S.sosHistory.slice(0,5).map(e=>`
+    <div class="sos-hist-item">
+      <div>
+        <div class="sos-hist-time">${new Date(e.time).toLocaleString()}</div>
+        <div class="sos-hist-coords">${e.coords}</div>
+        ${e.sentTo?`<div style="font-size:.64rem;color:var(--teal3);margin-top:2px">Sent to: ${e.sentTo}</div>`:''}
+        ${e.mode?`<div style="font-size:.62rem;color:var(--text3)">${e.mode==='online'?'📶 SMS + WhatsApp':'📵 SMS only (offline)'}</div>`:''}
+      </div>
+      ${e.mapsLink?`<a href="${e.mapsLink}" target="_blank" style="font-size:.7rem;color:var(--teal3);text-decoration:none;flex-shrink:0">Map ↗</a>`:''}
+    </div>`).join('')
+}
+
+function updateICECard(){
+  const el=document.getElementById('ice-card-display')
+  if(!el||!S.user) return
+  el.innerHTML=`
+    <div style="font-size:.82rem"><b>Name:</b> ${S.user.name}</div>
+    ${S.user.blood?`<div style="font-size:.82rem"><b>Blood Type:</b> ${S.user.blood}</div>`:''}
+    ${S.user.phone?`<div style="font-size:.82rem"><b>ICE Phone:</b> ${S.user.phone}</div>`:''}
+    <div style="font-size:.82rem"><b>Emergency Contacts:</b> ${S.contacts.length} saved</div>`
+}
+
+// ═══════════════════════════════════════════════════════════
+// FEED INTERACTIONS
+// ═══════════════════════════════════════════════════════════
+function toggleLike(btn){btn.classList.toggle('active-like');showToast(btn.classList.contains('active-like')?'Liked! ❤️':'Removed like','info')}
+function toggleSave(btn){btn.classList.toggle('active-save');showToast(btn.classList.contains('active-save')?'Saved! 🔖':'Removed from saved','info')}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer=null
+function showToast(msg,type='info'){
+  const el=document.getElementById('toast-el')
+  el.className='toast '+type; el.textContent=msg
+  if(toastTimer) clearTimeout(toastTimer)
+  requestAnimationFrame(()=>{
+    el.classList.add('show')
+    toastTimer=setTimeout(()=>el.classList.remove('show'),3000)
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+// OFFLINE TILE CACHE — CacheStorage (no Service Worker needed)
+// Blob/data: URL SWs are blocked by browsers. Instead we cache
+// tiles directly via CacheStorage when "Save Offline" is tapped,
+// and serve them via a patched Leaflet tile loader when offline.
+// ═══════════════════════════════════════════════════════════
+const TILE_CACHE_NAME = 'tm3-osm-tiles-v1'
+
+// ── downloadTiles: cache current viewport to CacheStorage ──
+async function downloadTiles(){
+  if(!S.map){ showToast('Open Map tab first','error'); return }
+  const bounds = S.map.getBounds()
+  const btn  = document.getElementById('dl-tile-btn')
+  const box  = document.getElementById('dl-box')
+  const fill = document.getElementById('dl-fill')
+  const pct  = document.getElementById('dl-pct')
+  const info = document.getElementById('dl-info-text')
+  const lbl  = document.getElementById('dl-btn-label')
+
+  // Build tile URL list zoom 12–16
+  const urls = []
+  for(let z = 12; z <= 16; z++){
+    const nw = S.map.project(bounds.getNorthWest(), z).divideBy(256).floor()
+    const se = S.map.project(bounds.getSouthEast(), z).divideBy(256).floor()
+    for(let x = nw.x; x <= se.x; x++)
+      for(let y = nw.y; y <= se.y; y++){
+        const sub = ['a','b','c'][Math.abs(x+y)%3]
+        urls.push(`https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`)
+      }
+  }
+  const total = Math.min(urls.length, 800)
+  if(total === 0){ showToast('Zoom in more before saving offline','warn'); return }
+
+  if(btn){ btn.style.pointerEvents='none'; btn.style.opacity='.55' }
+  if(box) box.style.display = 'block'
+
+  let done = 0, cache = null
+  try{ cache = await caches.open(TILE_CACHE_NAME) }catch(e){ console.warn('CacheStorage:',e.message) }
+
+  for(let i = 0; i < total; i++){
+    try{
+      const resp = await fetch(urls[i], {mode:'cors'})
+      if(resp.ok && cache) await cache.put(urls[i], resp.clone())
+      done++
+      const p = Math.round(done/total*100)
+      if(fill) fill.style.width = p+'%'
+      if(pct)  pct.textContent  = p+'%'
+      if(info) info.textContent = `${done}/${total} tiles · ~${(done*18/1024).toFixed(1)}MB`
+    }catch{}
+  }
+
+  if(box) box.style.display = 'none'
+  if(btn){ btn.style.pointerEvents=''; btn.style.opacity='1' }
+  if(lbl) lbl.textContent = '✓ Saved!'
+  setTimeout(()=>{ if(lbl) lbl.textContent='Save Offline' }, 4000)
+  showToast(`✅ ${total} tiles saved offline!`, 'success')
+  addTimelineEvent('🗺️','Map Saved Offline', new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), `${total} tiles cached`)
+}
+
+function patchLeafletOfflineSupport(){
+  if(typeof L === 'undefined') return
+  const origCreateTile = L.TileLayer.prototype.createTile
+  L.TileLayer.prototype.createTile = function(coords, done){
+    const tile = document.createElement('img')
+    tile.setAttribute('role','presentation')
+    const url = this.getTileUrl(coords)
+    const onError = ()=>{
+      // When fetch fails (offline), try CacheStorage
+      if('caches' in window){
+        caches.open(TILE_CACHE_NAME).then(cache=>
+          cache.match(url).then(cached=>{
+            if(cached) cached.blob().then(b=>{ tile.src=URL.createObjectURL(b); done(null,tile) })
+            else done(new Error('tile not cached'),tile)
+          })
+        )
+      } else { done(new Error('offline'),tile) }
+    }
+    tile.onload = ()=>done(null,tile)
+    tile.onerror = onError
+    tile.crossOrigin = 'anonymous'
+    // Try CacheStorage first if offline
+    if(!navigator.onLine && 'caches' in window){
+      caches.open(TILE_CACHE_NAME).then(cache=>
+        cache.match(url).then(cached=>{
+          if(cached) cached.blob().then(b=>{ tile.src=URL.createObjectURL(b) })
+          else tile.src = url
+        })
+      ).catch(()=>{ tile.src = url })
+    } else {
+      tile.src = url
+    }
+    return tile
+  }
+  console.log('✅ TrekMate: Leaflet offline tile cache active')
+}
+// Note: patchLeafletOfflineSupport() is called inside initMap() after L is loaded
+
+// ── INIT ──
+updateConnectivity()
+</script>
+</body>
+</html>
